@@ -1,0 +1,77 @@
+{
+  "$schema": "https://schema.tauri.app/config/1.5",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devPath": "../dist",
+    "distDir": "../dist",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "MDReader",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "fs": {
+        "scope": ["**"]
+      },
+      "shell": {
+        "all": false,
+        "open": true
+      },
+      "window": {
+        "all": true
+      },
+      "dialog": {
+        "all": false,
+        "open": true,
+        "save": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "category": "Productivity",
+      "copyright": "Copyright © 2026 中国邮政集团有限公司浙江省信息技术中心 (China Post Group Co., Ltd. Zhejiang IT Center)",
+      "targets": "all",
+      "externalBin": [],
+      "icon": [
+        "icons/icon.ico",
+        "icons/icon.icns",
+        "icons/icon.png"
+      ],
+      "identifier": "com.mdreader.app",
+      "longDescription": "Markdown Reader",
+      "resources": [],
+      "shortDescription": "Markdown Reader",
+      "appimage": { "bundleMediaFramework": false },
+      "windows": {
+        "webviewInstallMode": {
+          "type": "offlineInstaller"
+        }
+      },
+      "macOS": {
+        "frameworks": [],
+        "minimumSystemVersion": "10.15"
+      }
+    },
+    "security": {
+      "csp": null
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "MDReader - Markdown 阅读器",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "fileDropEnabled": true
+      }
+    ],
+    "macOSPrivateApi": false
+  }
+}

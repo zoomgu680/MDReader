@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MDReader · 全功能 Markdown 阅读器</title>
+<meta name="description" content="单文件 Markdown 阅读器，支持全部 Markdown 标签、内联 HTML、代码高亮、数学公式、Mermaid 图表，界面简洁、样式可调。" />
+
+<!-- highlight.js 主题（默认浅色，主题切换时动态替换） -->
+<link id="hljs-theme" rel="stylesheet" href="resources/hljs-themes/github.min.css" />
+<!-- KaTeX 样式（fonts/ 子目录已本地化） -->
+<link rel="stylesheet" href="resources/katex.min.css" />
+<!-- 应用样式 -->
+<link rel="stylesheet" href="resources/style.css" />
+</head>
+<body>
+
+<!-- 阅读进度条 -->
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- 顶栏 -->
+<header class="topbar">
+  <button class="btn icon" id="btnSidebar" title="切换目录 (Ctrl+B)" aria-label="切换目录">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="brand">
+    <span class="brand-logo">M</span>
+    <span>MDReader <small>· Markdown 阅读器</small></span>
+  </div>
+  <div class="topbar-spacer"></div>
+  <span class="file-name" id="fileName"></span>
+  <input type="file" id="fileInput" accept=".md,.markdown,.text,.txt,.html,.htm" hidden />
+  <button class="btn outline" id="btnOpen" title="打开文件 (Ctrl+O)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    <span>打开</span>
+  </button>
+  <button class="btn icon" id="btnFontSize" title="字体大小">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+  </button>
+  <button class="btn icon" id="btnSettings" title="设置">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+  <button class="btn icon" id="btnPrint" title="打印 / 导出 PDF (Ctrl+P)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+  </button>
+  <button class="btn icon" id="btnEdit" title="编辑文档 (Ctrl+E)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+  </button>
+
+</header>
+
+<!-- 字体大小滑块弹窗 -->
+<div class="fontsize-popup" id="fontsizePopup">
+  <div class="fontsize-row">
+    <span class="fontsize-label">A-</span>
+    <input type="range" id="fontsizeSlider" min="12" max="28" step="1" value="16" />
+    <span class="fontsize-label">A+</span>
+    <span class="fontsize-value" id="fontsizeValue">16px</span>
+  </div>
+</div>
+
+<!-- Mermaid 图形全屏查看遮罩 -->
+<div class="mermaid-fullscreen" id="mermaidFullscreen">
+  <button class="mermaid-fullscreen-close" id="mermaidFullscreenClose" title="关闭 (Esc)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <div class="mermaid-fullscreen-body" id="mermaidFullscreenBody"></div>
+</div>
+
+<!-- 主体布局 -->
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title"><span>目录</span><span id="tocCount"></span></div>
+    <ul class="toc" id="toc"><li class="toc-empty">无可用标题</li></ul>
+  </aside>
+  <main class="main" id="main">
+    <article class="content" id="content" tabindex="0">
+      <div class="empty-state">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <h2>开始阅读</h2>
+        <p>将 .md 文件拖到此处，或点击下方按钮选择文件。也可以按 Ctrl+V 粘贴 Markdown 内容，或在 URL 后加 <code>#url=...</code> 加载远程文档。</p>
+        <div class="actions">
+          <button class="btn primary" id="btnOpenEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span>打开文件</span>
+          </button>
+        </div>
+      </div>
+    </article>
+  </main>
+</div>
+
+<!-- 设置抽屉 -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-header">
+    <h3>设置</h3>
+    <button class="btn icon" id="btnCloseDrawer" title="关闭">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body">
+
+    <div class="setting-group">
+      <label>主题</label>
+      <div class="chip-row" id="themeChips"></div>
+    </div>
+
+    <div class="setting-group">
+      <label>正文字体</label>
+      <div class="chip-row" id="fontChips"></div>
+    </div>
+
+    <div class="setting-group">
+      <label>字号 <span class="range-value" id="sizeValue">16px</span></label>
+      <div class="setting-row">
+        <input type="range" id="sizeRange" min="12" max="22" step="1" value="16" />
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <label>行高 <span class="range-value" id="lhValue">1.7</span></label>
+      <div class="setting-row">
+        <input type="range" id="lhRange" min="1.3" max="2.2" step="0.05" value="1.7" />
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <label>内容宽度 <span class="range-value" id="widthValue">820px</span></label>
+      <div class="setting-row">
+        <input type="range" id="widthRange" min="560" max="1200" step="20" value="820" />
+      </div>
+    </div>
+
+    <div class="setting-group">
+      <label>代码主题</label>
+      <select id="codeThemeSelect"></select>
+    </div>
+
+    <div class="setting-group">
+      <label>渲染选项</label>
+      <div class="setting-row">
+        <div class="switch" id="swBreaks"></div>
+        <span class="switch-label">软换行转为 &lt;br&gt;</span>
+      </div>
+      <div class="setting-row">
+        <div class="switch on" id="swGfm"></div>
+        <span class="switch-label">GitHub 风格 Markdown</span>
+      </div>
+      <div class="setting-row">
+        <div class="switch on" id="swSanitize"></div>
+        <span class="switch-label">过滤内联 HTML（安全模式）</span>
+      </div>
+      <div class="setting-row">
+        <div class="switch on" id="swMath"></div>
+        <span class="switch-label">渲染数学公式 (KaTeX)</span>
+      </div>
+      <div class="setting-row">
+        <div class="switch on" id="swMermaid"></div>
+        <span class="switch-label">渲染 Mermaid 图表</span>
+      </div>
+      <div class="setting-row">
+        <div class="switch" id="swAnchor"></div>
+        <span class="switch-label">标题显示锚点链接</span>
+      </div>
+    </div>
+
+  </div>
+  <div class="drawer-footer">
+    <button class="btn outline" id="btnAbout">关于</button>
+    <button class="btn outline" id="btnReset">重置默认</button>
+    <button class="btn primary" id="btnExport">导出 HTML</button>
+  </div>
+</aside>
+
+<!-- 关于弹窗 -->
+<div class="about-overlay" id="aboutOverlay">
+  <div class="about-modal">
+    <div class="about-header">
+      <h2>关于 MDReader</h2>
+      <button class="btn icon" id="btnCloseAbout" title="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="about-body">
+      <div class="about-app-info">
+        <div class="about-logo">M</div>
+        <h3>MDReader</h3>
+        <p class="about-version">版本 0.1.0</p>
+        <p class="about-desc">全功能 Markdown 阅读器，支持全部 Markdown 标签、内联 HTML、代码高亮、数学公式、Mermaid 图表。</p>
+      </div>
+      <div class="about-copyright">
+        <p><strong>版权所有：中国邮政集团有限公司浙江省信息技术中心</strong></p>
+        <p>China Post Group Co., Ltd. Zhejiang IT Center</p>
+        <p>本软件遵循 MIT / Apache-2.0 开源协议发布。</p>
+      </div>
+      <div class="about-licenses">
+        <h4>第三方组件版权声明</h4>
+        <div class="license-item">
+          <strong>marked.js v12.0.2</strong>
+          <span>MIT License</span>
+          <small>Copyright (c) 2018+ MarkedJS, (c) 2011-2018 Christopher Jeffrey</small>
+          <a href="https://github.com/markedjs/marked" target="_blank">github.com/markedjs/marked</a>
+        </div>
+        <div class="license-item">
+          <strong>DOMPurify v3.1.6</strong>
+          <span>Apache-2.0 / MPL-2.0</span>
+          <small>Copyright (c) Cure53 and other contributors</small>
+          <a href="https://github.com/cure53/DOMPurify" target="_blank">github.com/cure53/DOMPurify</a>
+        </div>
+        <div class="license-item">
+          <strong>highlight.js v11.9.0</strong>
+          <span>BSD 3-Clause License</span>
+          <small>Copyright (c) 2006, Ivan Sagalaev</small>
+          <a href="https://github.com/highlightjs/highlight.js" target="_blank">github.com/highlightjs/highlight.js</a>
+        </div>
+        <div class="license-item">
+          <strong>KaTeX</strong>
+          <span>MIT License</span>
+          <small>Copyright (c) 2013-2020 Khan Academy and other contributors</small>
+          <a href="https://github.com/KaTeX/KaTeX" target="_blank">github.com/KaTeX/KaTeX</a>
+        </div>
+        <div class="license-item">
+          <strong>Mermaid</strong>
+          <span>MIT License</span>
+          <small>Copyright (c) 2014-2022 Knut Sveidqvist</small>
+          <a href="https://github.com/mermaid-js/mermaid" target="_blank">github.com/mermaid-js/mermaid</a>
+        </div>
+        <div class="license-item">
+          <strong>Tauri</strong>
+          <span>Apache License 2.0</span>
+          <small>Copyright (c) Tauri Programme within The Commons Conservancy</small>
+          <a href="https://github.com/tauri-apps/tauri" target="_blank">github.com/tauri-apps/tauri</a>
+        </div>
+        <div class="license-item">
+          <strong>serde (Rust)</strong>
+          <span>MIT / Apache-2.0</span>
+          <small>Copyright (c) Serde Developers</small>
+          <a href="https://github.com/serde-rs/serde" target="_blank">github.com/serde-rs/serde</a>
+        </div>
+        <div class="license-item">
+          <strong>dirs (Rust)</strong>
+          <span>MIT / Apache-2.0</span>
+          <small>Copyright (c) dirs Developers</small>
+          <a href="https://codeberg.org/dirs/dirs-rs" target="_blank">codeberg.org/dirs/dirs-rs</a>
+        </div>
+        <div class="license-item">
+          <strong>base64 (Rust)</strong>
+          <span>MIT / Apache-2.0</span>
+          <small>Copyright (c) base64 Developers</small>
+          <a href="https://github.com/marshallpierce/rust-base64" target="_blank">github.com/marshallpierce/rust-base64</a>
+        </div>
+      </div>
+      <p class="about-footer-text">以上所有组件均为开源软件，遵循其各自许可证条款使用。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 拖拽遮罩 -->
+<div class="drop-overlay" id="dropOverlay">
+  <div class="card">
+    <h3>释放以加载文件</h3>
+    <p>支持 .md / .markdown / .txt / .html</p>
+  </div>
+</div>
+
+<!-- 编辑器遮罩 -->
+<div class="editor-overlay" id="editorOverlay">
+  <div class="editor-bar">
+    <span class="editor-title" id="editorTitle">编辑文档</span>
+    <div class="editor-actions">
+      <button class="btn outline" id="btnEditorCancel">取消</button>
+      <button class="btn primary" id="btnEditorSave">保存并渲染 (Ctrl+S)</button>
+    </div>
+  </div>
+  <textarea class="editor-textarea" id="editorTextarea" spellcheck="false" placeholder="在此输入 Markdown 文本..."></textarea>
+</div>
+
+<!-- 回到顶部 -->
+<button class="fab" id="btnTop" title="回到顶部" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+</button>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     外部库（CDN）
+     ============================================================ -->
+<script src="resources/marked.min.js"></script>
+<script src="resources/purify.min.js"></script>
+<script src="resources/highlight.min.js"></script>
+<script src="resources/katex.min.js"></script>
+<script src="resources/auto-render.min.js"></script>
+<script src="resources/mermaid.min.js"></script>
+<script src="resources/tauri-bridge.js"></script>
+<script>
+  // Mermaid UMD 加载后挂载到 window.mermaid，这里初始化配置
+  if (window.mermaid) {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'default',
+      securityLevel: 'loose',
+      maxTextSize: 100000,
+      maxEdges: 100000,
+      flowchart: { useMaxWidth: true, htmlLabels: false, curve: 'basis', padding: 12 },
+      sequence: { useMaxWidth: true, wrap: true, actorMargin: 60, messageMargin: 40 },
+      gantt: { useMaxWidth: true },
+      class: { useMaxWidth: true },
+      state: { useMaxWidth: true },
+      er: { useMaxWidth: true },
+      pie: { useMaxWidth: true },
+    });
+  }
+</script>
+
+<script>
+/* ============================================================
+   MDReader 主程序
+   ============================================================ */
+(function () {
+  'use strict';
+
+  const $ = (s, p = document) => p.querySelector(s);
+  const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
+
+  // 主题列表
+  const THEMES = [
+    { id: 'light',           name: '浅色',          swatch: '#ffffff' },
+    { id: 'dark',            name: '深色',          swatch: '#0d1117' },
+    { id: 'sepia',           name: '复古',          swatch: '#f4ecd8' },
+    { id: 'nord',            name: 'Nord',         swatch: '#eceff4' },
+    { id: 'dracula',         name: 'Dracula',      swatch: '#282a36' },
+  ];
+  const FONTS = [
+    { id: 'ui',    name: '系统默认' },
+    { id: 'serif', name: '衬线' },
+    { id: 'sans',  name: '无衬线' },
+    { id: 'mono',  name: '等宽' },
+  ];
+  const CODE_THEMES = [
+    { id: 'github',           label: 'GitHub',       dark: false },
+    { id: 'github-dark',      label: 'GitHub Dark',   dark: true  },
+    { id: 'atom-one-light',   label: 'Atom One Light', dark: false },
+    { id: 'atom-one-dark',    label: 'Atom One Dark', dark: true  },
+    { id: 'vs',               label: 'VS Code Light', dark: false },
+    { id: 'vs2015',           label: 'VS Code Dark',  dark: true  },
+    { id: 'monokai',          label: 'Monokai',       dark: true  },
+    { id: 'monokai-sublime',  label: 'Monokai Sub.',  dark: true  },
+    { id: 'nord',             label: 'Nord',          dark: true  },
+    { id: 'androidstudio',    label: 'Android St.',   dark: true  },
+  ];
+  const HLJS_BASE = 'resources/hljs-themes/';
+
+  // 默认设置
+  const DEFAULTS = {
+    theme: 'light',
+    font: 'ui',
+    size: 16,
+    lh: 1.7,
+    width: 820,
+    codeTheme: 'github',
+    breaks: false,
+    gfm: true,
+    sanitize: true,
+    math: true,
+    mermaid: true,
+    anchor: false,
+    sidebarCollapsed: false,
+  };
+
+  // 当前设置
+  let settings = Object.assign({}, DEFAULTS);
+  let lastMarkdown = '';
+  let currentFileName = '';
+  let currentFilePath = ''; // 当前文件的完整路径（Tauri 环境下用于写回磁盘）
+
+  // ---------- 工具函数 ----------
+  function debounce(fn, ms = 120) {
+    let t;
+    return function (...a) { clearTimeout(t); t = setTimeout(() => fn.apply(this, a), ms); };
+  }
+  function toast(msg) {
+    const el = $('#toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove('show'), 1800);
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // ---------- 持久化 ----------
+  function loadSettings() {
+    try {
+      const s = localStorage.getItem('mdreader:settings');
+      if (s) settings = Object.assign({}, DEFAULTS, JSON.parse(s));
+    } catch (_) {}
+    // URL 覆盖（?theme=dark 等）
+    const u = new URL(location.href);
+    for (const k of Object.keys(DEFAULTS)) {
+      const v = u.searchParams.get(k);
+      if (v !== null) {
+        const val = isNaN(+DEFAULTS[k]) ? v : +v;
+        settings[k] = typeof DEFAULTS[k] === 'boolean' ? v === '1' || v === 'true' : val;
+      }
+    }
+  }
+  function saveSettings() {
+    try { localStorage.setItem('mdreader:settings', JSON.stringify(settings)); } catch (_) {}
+  }
+  function saveLastDoc(md, name) {
+    if (md != null) lastMarkdown = md;
+    if (name != null) currentFileName = name;
+    if (!lastMarkdown) return;
+    try {
+      localStorage.setItem('mdreader:lastdoc', JSON.stringify({ name: currentFileName, body: lastMarkdown }));
+    } catch (_) { /* 配额超限忽略 */ }
+  }
+  function loadLastDoc() {
+    try {
+      const s = localStorage.getItem('mdreader:lastdoc');
+      if (!s) return null;
+      return JSON.parse(s);
+    } catch (_) { return null; }
+  }
+
+  // ---------- 应用样式 ----------
+  function applySettings() {
+    document.documentElement.setAttribute('data-theme', settings.theme);
+    document.documentElement.setAttribute('data-content-font', settings.font);
+    document.documentElement.style.setProperty('--content-size', settings.size + 'px');
+    document.documentElement.style.setProperty('--content-lh', settings.lh);
+    document.documentElement.style.setProperty('--content-width', settings.width + 'px');
+    // 同步代码主题
+    const ct = CODE_THEMES.find(c => c.id === settings.codeTheme) || CODE_THEMES[0];
+    $('#hljs-theme').href = HLJS_BASE + ct.id + '.min.css';
+    // 设置面板回填
+    $('#sizeRange').value = settings.size;
+    $('#lhRange').value = settings.lh;
+    $('#widthRange').value = settings.width;
+    $('#sizeValue').textContent = settings.size + 'px';
+    $('#lhValue').textContent = settings.lh;
+    $('#widthValue').textContent = settings.width + 'px';
+    $('#codeThemeSelect').value = settings.codeTheme;
+    $('#swBreaks').classList.toggle('on', settings.breaks);
+    $('#swGfm').classList.toggle('on', settings.gfm);
+    $('#swSanitize').classList.toggle('on', settings.sanitize);
+    $('#swMath').classList.toggle('on', settings.math);
+    $('#swMermaid').classList.toggle('on', settings.mermaid);
+    $('#swAnchor').classList.toggle('on', settings.anchor);
+    // 主题芯片
+    $$('#themeChips .chip').forEach(c => c.classList.toggle('active', c.dataset.id === settings.theme));
+    // 侧栏状态
+    $('#sidebar').classList.toggle('collapsed', settings.sidebarCollapsed);
+  }
+
+  // ---------- slug 生成（兜底，避免 slugger 缺失） ----------
+  function makeSlug(raw) {
+    return String(raw || '')
+      .toLowerCase()
+      .trim()
+      .replace(/[\s\.\,\;\:\!\?\(\)\[\]\{\}<>]+/g, '-')
+      .replace(/[^\w\u4e00-\u9fa5\-]+/g, '')
+      .replace(/\-+/g, '-')
+      .replace(/^\-+|\-+$/g, '') || 'heading';
+  }
+
+  // ---------- marked 配置与渲染 ----------
+  // marked v12 起，Renderer 方法接收单个 token 对象（而非位置参数）。
+  // 这里对 code / heading / link / checkbox 做对象签名重写，并保留位置参数回退以保证向后兼容。
+  // 将图片相对路径解析为基于 MD 文件所在目录的可访问 URL
+  function resolveImageSrc(src) {
+    if (!src) return src;
+    // 已经是绝对 URL 或 data URI，直接返回
+    if (/^(https?:|data:|file:|blob:)/i.test(src) || src.startsWith('//')) {
+      return src;
+    }
+    // 以 / 开头的绝对路径（POSIX 风格）
+    if (src.startsWith('/')) {
+      return toAccessibleUrl(src);
+    }
+    // Windows 绝对路径，如 C:\... 或 C:/...
+    if (/^[a-zA-Z]:[\\\/]/.test(src)) {
+      return toAccessibleUrl(src);
+    }
+    // 相对路径：基于 currentFilePath 所在目录解析
+    const baseDir = getBaseDir();
+    if (!baseDir) return src; // 无基准目录（浏览器 FileReader 模式），保持原样
+    const resolved = joinPath(baseDir, src);
+    return toAccessibleUrl(resolved);
+  }
+
+  // 获取当前 MD 文件所在目录
+  function getBaseDir() {
+    if (currentFilePath) {
+      // 取最后一个路径分隔符之前的部分
+      const idx = Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'));
+      return idx >= 0 ? currentFilePath.slice(0, idx) : '';
+    }
+    return '';
+  }
+
+  // 拼接路径，处理 ../ 等
+  function joinPath(base, rel) {
+    // 统一用 / 分隔
+    const baseParts = base.split(/[\\\/]+/).filter(Boolean);
+    const relParts = rel.split(/[\\\/]+/).filter(Boolean);
+    for (const p of relParts) {
+      if (p === '.') continue;
+      if (p === '..') {
+        if (baseParts.length > 0) baseParts.pop();
+      } else {
+        baseParts.push(p);
+      }
+    }
+    // Windows 路径保留盘符
+    let result = baseParts.join('/');
+    if (/^[a-zA-Z]:$/.test(baseParts[0])) {
+      // 盘符后跟 : ，需要加 /
+      result = baseParts[0] + '/' + baseParts.slice(1).join('/');
+    } else if (base.startsWith('/')) {
+      // 绝对路径以 / 开头
+      result = '/' + baseParts.join('/');
+    }
+    // 还原 Windows 反斜杠
+    if (/^[a-zA-Z]:\//.test(result)) {
+      result = result.replace(/\//g, '\\');
+    }
+    return result;
+  }
+
+  // 将本地文件路径转换为 WebView 可访问的 URL
+  function toAccessibleUrl(filePath) {
+    // Tauri 环境：使用 convertFileSrc 转换
+    const tauri = window.__TAURI__;
+    if (tauri) {
+      const convert = tauri.convertFileSrc || (tauri.tauri && tauri.tauri.convertFileSrc);
+      if (typeof convert === 'function') {
+        try { return convert(filePath); } catch (_) {}
+      }
+    }
+    // 浏览器模式：使用 file:// 协议
+    // Windows 路径需要转换
+    let p = filePath.replace(/\\/g, '/');
+    if (/^[a-zA-Z]:\//.test(p)) {
+      return 'file:///' + p;
+    }
+    return 'file://' + p;
+  }
+
+  function configureMarked() {
+    const renderer = new marked.Renderer();
+
+    renderer.code = function (arg) {
+      // 兼容 v12 对象签名与旧版位置签名
+      let code, info, escaped;
+      if (arg && typeof arg === 'object') {
+        code = arg.text; info = arg.lang; escaped = arg.escaped;
+      } else {
+        code = arguments[0]; info = arguments[1]; escaped = arguments[2];
+      }
+      code = code == null ? '' : String(code);
+      info = info == null ? '' : String(info);
+
+      // Mermaid 块：原始代码存 data-src（URL 编码），避免 HTML 实体转义问题
+      if (settings.mermaid && info.trim().toLowerCase() === 'mermaid') {
+        const id = 'mmd-' + Math.random().toString(36).slice(2, 9);
+        return '<div class="mermaid-wrap"><div class="mermaid" id="' + id + '" data-src="' + encodeURIComponent(code) + '"></div></div>';
+      }
+      const lang = (info.match(/\S+/) || [''])[0];
+      let highlighted = '';
+      try {
+        if (window.hljs && lang && hljs.getLanguage(lang)) {
+          highlighted = hljs.highlight(code, { language: lang, ignoreIllegals: true }).value;
+        } else if (window.hljs) {
+          highlighted = hljs.highlightAuto(code).value;
+        } else {
+          highlighted = escapeHtml(code);
+        }
+      } catch (e) {
+        highlighted = escapeHtml(code);
+      }
+      const langLabel = lang ? lang.toUpperCase() : 'TEXT';
+      const raw = escaped ? code : escapeHtml(code);
+      return '<pre><div class="code-header"><span class="lang">' + langLabel + '</span>' +
+        '<button class="copy-btn" data-copy="' + encodeURIComponent(raw) + '" type="button">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+        '<span>复制</span></button></div><code class="hljs language-' + lang + '">' + highlighted + '</code></pre>';
+    };
+
+    renderer.heading = function (arg) {
+      let text, level, raw, slugger;
+      if (arg && typeof arg === 'object') {
+        text = arg.text; level = arg.depth; raw = arg.raw; slugger = arg.slugger;
+      } else {
+        text = arguments[0]; level = arguments[1]; raw = arguments[2]; slugger = arguments[3];
+      }
+      const slug = slugger && typeof slugger.slug === 'function' ? slugger.slug(raw) : makeSlug(raw);
+      const anchor = settings.anchor ? '<a class="anchor" href="#' + slug + '" title="永久链接">¶</a>' : '';
+      return '<h' + level + ' id="' + slug + '">' + text + anchor + '</h' + level + '>';
+    };
+
+    renderer.link = function (arg) {
+      let href, title, text;
+      if (arg && typeof arg === 'object') {
+        href = arg.href; title = arg.title; text = arg.text;
+      } else {
+        href = arguments[0]; title = arguments[1]; text = arguments[2];
+      }
+      href = href == null ? '' : String(href);
+      title = title == null ? '' : String(title);
+      const titleAttr = title ? ' title="' + title.replace(/"/g, '&quot;') + '"' : '';
+      if (href.startsWith('#')) {
+        return '<a href="' + href + '"' + titleAttr + '>' + text + '</a>';
+      }
+      return '<a href="' + href + '" target="_blank" rel="noopener noreferrer"' + titleAttr + '>' + text + '</a>';
+    };
+
+    // 图片渲染：保持原始路径，后续由 loadLocalImages 转为 base64
+    renderer.image = function (arg) {
+      let href, title, text;
+      if (arg && typeof arg === 'object') {
+        href = arg.href; title = arg.title; text = arg.text;
+      } else {
+        href = arguments[0]; title = arguments[1]; text = arguments[2];
+      }
+      href = href == null ? '' : String(href);
+      title = title == null ? '' : String(title);
+      text = text == null ? '' : String(text);
+      const titleAttr = title ? ' title="' + title.replace(/"/g, '&quot;') + '"' : '';
+      const altAttr = text ? ' alt="' + text.replace(/"/g, '&quot;') + '"' : '';
+      return '<img src="' + escapeHtml(href) + '"' + altAttr + titleAttr + ' />';
+    };
+
+    renderer.checkbox = function (arg) {
+      let checked;
+      if (arg && typeof arg === 'object') { checked = arg.checked; }
+      else { checked = arguments[0]; }
+      return '<input type="checkbox" ' + (checked ? 'checked' : '') + ' disabled />';
+    };
+
+    // marked v12 已移除 headerIds / mangle 选项（改由扩展实现），
+    // 这里在 heading renderer 中自行生成 id，因此无需这两个选项。
+    marked.setOptions({
+      renderer,
+      gfm: settings.gfm,
+      breaks: settings.breaks,
+    });
+  }
+
+  function sanitizeHtml(html) {
+    if (!settings.sanitize) return html;
+    return DOMPurify.sanitize(html, {
+      // button / input 由本应用的 renderer 生成（复制按钮、任务清单勾选框），需要保留
+      ADD_TAGS: ['details', 'summary', 'figure', 'figcaption', 'kbd', 'mark', 'abbr', 'address', 'samp', 'var', 'sub', 'sup', 'ruby', 'rt', 'rp', 'time', 'video', 'audio', 'source', 'track', 'iframe', 'button', 'input'],
+      ADD_ATTR: ['id', 'class', 'style', 'align', 'colspan', 'rowspan', 'target', 'controls', 'autoplay', 'loop', 'muted', 'preload', 'poster', 'width', 'height', 'allowfullscreen', 'frameborder', 'datetime', 'cite', 'title', 'lang', 'dir', 'start', 'type', 'value', 'checked', 'disabled', 'data-copy', 'data-src', 'data-done'],
+      // 仅禁止真正危险的标签；form/textarea/select 等交互表单仍禁止
+      FORBID_TAGS: ['script', 'style', 'link', 'meta', 'base', 'object', 'embed', 'form', 'textarea', 'select', 'option'],
+      FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onsubmit', 'onfocus', 'onblur', 'onchange', 'oninput', 'onkeydown', 'onkeyup', 'onkeypress'],
+      ALLOW_DATA_ATTR: true,
+      WHOLE_DOCUMENT: false,
+    });
+  }
+
+  function renderMath(container) {
+    if (!settings.math || !window.renderMathInElement) return;
+    try {
+      renderMathInElement(container, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '\\[', right: '\\]', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\(', right: '\\)', display: false },
+        ],
+        throwOnError: false,
+        ignoredTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+      });
+    } catch (_) {}
+  }
+
+  // 给代码块的"复制"按钮绑定点击事件
+  function enhanceCodeBlocks(container) {
+    $$('.copy-btn', container).forEach(btn => {
+      btn.addEventListener('click', () => {
+        const raw = decodeURIComponent(btn.dataset.copy || '');
+        navigator.clipboard.writeText(raw).then(() => {
+          const span = btn.querySelector('span');
+          if (span) { const old = span.textContent; span.textContent = '已复制'; setTimeout(() => span.textContent = old, 1500); }
+        }).catch(() => {
+          // 降级：用临时 textarea 复制
+          const ta = document.createElement('textarea');
+          ta.value = raw; document.body.appendChild(ta); ta.select();
+          try { document.execCommand('copy'); } catch (_) {}
+          document.body.removeChild(ta);
+        });
+      });
+    });
+  }
+
+  // Mermaid UMD 版本通过 <script> 同步加载，直接挂在 window.mermaid
+  function ensureMermaid() {
+    return Promise.resolve(window.mermaid || null);
+  }
+
+  // Mermaid 主题跟随应用主题：深色主题用 dark，其余用 default
+  function mermaidThemeFor(current) {
+    const dark = ['dark', 'solarized-dark', 'dracula'];
+    return dark.indexOf(current) >= 0 ? 'dark' : 'default';
+  }
+
+  // 主题切换时重新初始化 Mermaid，并重渲染已有图表
+  let lastMermaidTheme = 'default';
+  function syncMermaidTheme() {
+    const want = mermaidThemeFor(settings.theme);
+    if (want === lastMermaidTheme) return false;
+    lastMermaidTheme = want;
+    return true;
+  }
+
+  async function renderMermaid(container) {
+    const blocks = $$('.mermaid', container);
+    if (!settings.mermaid || blocks.length === 0) return;
+
+    // 等待库就绪（最多 ~6s）
+    const mermaid = await Promise.race([
+      ensureMermaid(),
+      new Promise(r => setTimeout(() => r(null), 6000)),
+    ]);
+    if (!mermaid) {
+      blocks.forEach(el => {
+        if (el.dataset.done) return;
+        el.innerHTML = '<pre style="color:#8b949e;text-align:left;font-size:12px;white-space:pre-wrap">' +
+          escapeHtml('Mermaid 库未就绪（可能离线或 CDN 不可达）。\n\n原始内容：\n' + el.textContent) + '</pre>';
+        el.dataset.done = '1';
+      });
+      return;
+    }
+
+    // 主题变化时重新初始化
+    const wantTheme = mermaidThemeFor(settings.theme);
+    if (wantTheme !== lastMermaidTheme) {
+      try {
+        mermaid.initialize({
+          startOnLoad: false, theme: wantTheme, securityLevel: 'loose',
+          maxTextSize: 100000, maxEdges: 100000,
+          flowchart: { useMaxWidth: true, htmlLabels: false, curve: 'basis', padding: 12 },
+          sequence: { useMaxWidth: true, wrap: true, actorMargin: 60, messageMargin: 40 },
+          gantt: { useMaxWidth: true }, class: { useMaxWidth: true },
+          state: { useMaxWidth: true }, er: { useMaxWidth: true }, pie: { useMaxWidth: true },
+        });
+      } catch (_) {}
+      lastMermaidTheme = wantTheme;
+    }
+
+    for (const el of blocks) {
+      // 重新渲染（如主题切换后）需要清除 done 标记，由调用方处理
+      if (el.dataset.done === settings.theme) continue;
+      // data-src 存的是 URL 编码的原始 Mermaid 代码，decodeURIComponent 还原
+      let src = el.dataset.src != null ? decodeURIComponent(el.dataset.src) : el.textContent;
+      el.dataset.src = encodeURIComponent(src); // 保存原始文本，便于重渲染
+      el.innerHTML = '<div class="mmd-loading" style="color:var(--fg-faint);font-size:12px;padding:8px">渲染中…</div>';
+      el.dataset.done = settings.theme;
+      try {
+        // htmlLabels:false 时，把 HTML 换行 <br> 转为 Mermaid 原生换行符 \n，
+        // 否则 <br> 会被当作纯文本显示
+        src = src.replace(/<br\s*\/?>(\s*\n)?/gi, '\n');
+        // 边线标签和节点文本中的 < 在 SVG XML 中是保留字符会被转义为 &lt;，
+        // 这里用全角＜(U+FF1C)和＞(U+FF1E)替换半角<>以避免转义
+        // 仅替换不在标签语法中的 < >（如 A-->B, C[node] 等语法保留不动）
+        src = src.replace(/(<)(?=\s*\d|[\u4e00-\u9fa5])/g, '\uFF1C');
+        src = src.replace(/(?<=[\u4e00-\u9fa5]\s|\d\s)(>)/g, '\uFF1E');
+        // 使用唯一 ID，避免重复渲染冲突
+        const id = 'mmd-svg-' + Math.random().toString(36).slice(2, 10);
+        const { svg } = await mermaid.render(id, src);
+        el.innerHTML = svg;
+        // 渲染后微调 SVG 文本基线，进一步避免中文行末裁切
+        tweakMermaidText(el);
+      } catch (e) {
+        // 失败时展示错误与原始源码，便于调试
+        const msg = (e && e.message) ? e.message : String(e);
+        el.innerHTML =
+          '<pre style="color:#d73a49;text-align:left;font-size:12px;white-space:pre-wrap;background:var(--bg-soft);padding:10px;border-radius:6px;margin:0">' +
+          escapeHtml('Mermaid 渲染失败: ' + msg + '\n\n原始内容：\n' + src) + '</pre>';
+      }
+      el.dataset.done = settings.theme;
+    }
+  }
+
+  // 渲染后微调：确保中文字符在节点框内完整显示
+  // htmlLabels:false 下文字以 SVG <text>/<tspan> 渲染，度量更准，
+  // 但仍可能因 CJK 实际占高略大于拉丁度量而底部微切，这里做兜底修正
+  function tweakMermaidText(container) {
+    const svg = container.querySelector('svg');
+    if (!svg) return;
+    // 让所有文本垂直居中，避免基线偏移造成的上下裁切不均
+    svg.querySelectorAll('text').forEach(t => {
+      if (!t.getAttribute('dominant-baseline')) {
+        t.setAttribute('dominant-baseline', 'middle');
+      }
+    });
+    // 对每个节点组：若文本实际高度 > 形状高度，扩展形状并居中文字
+    svg.querySelectorAll('.node').forEach(node => {
+      const shape = node.querySelector('rect, polygon, circle, ellipse, path');
+      const text = node.querySelector('text');
+      if (!shape || !text) return;
+      try {
+        const tb = text.getBBox();
+        const sb = shape.getBBox();
+        const pad = 4; // 上下内边距
+        if (tb.height + pad * 2 > sb.height) {
+          const newH = tb.height + pad * 2;
+          const dy = (newH - sb.height) / 2;
+          if (shape.tagName === 'rect') {
+            const y = parseFloat(shape.getAttribute('y')) || sb.y;
+            shape.setAttribute('y', y - dy);
+            shape.setAttribute('height', newH);
+          }
+          // 重新居中文字
+          const ts = text.getAttribute('transform') || '';
+          const cy = sb.y + sb.height / 2;
+          // 仅调整 tspan 的 y，使整体居中
+          const tspans = text.querySelectorAll('tspan');
+          if (tspans.length) {
+            const totalH = tb.height;
+            const startY = cy - totalH / 2 + (totalH / tspans.length) / 2;
+            tspans.forEach((ts, i) => {
+              ts.setAttribute('y', startY + i * (totalH / tspans.length));
+            });
+          }
+        }
+      } catch (_) { /* getBBox 在某些情况下失败，忽略 */ }
+    });
+  }
+
+  // 主题切换后重渲染 Mermaid（标记为需要更新）
+  function rerenderMermaidOnThemeChange() {
+    const blocks = $$('.mermaid');
+    blocks.forEach(el => { el.dataset.done = ''; });
+    renderMermaid($('#content'));
+  }
+
+  // ---------- 渲染入口 ----------
+  // ---------- 目录 ----------
+  function buildToc(content) {
+    const toc = $('#toc');
+    const headings = $$('h1, h2, h3, h4, h5, h6', content);
+    if (headings.length === 0) {
+      toc.innerHTML = '<li class="toc-empty">暂无目录</li>';
+      $('#tocCount').textContent = '0';
+      return;
+    }
+    const html = headings.map(h => {
+      const level = parseInt(h.tagName[1]);
+      const text = h.textContent.trim();
+      const id = h.id || makeSlug(text);
+      if (!h.id) h.id = id;
+      return '<li><a class="toc-l' + level + '" href="#' + id + '">' + escapeHtml(text) + '</a></li>';
+    }).join('');
+    toc.innerHTML = html;
+    $('#tocCount').textContent = headings.length;
+    // 点击平滑滚动
+    toc.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.getElementById(decodeURIComponent(a.getAttribute('href').slice(1)));
+        if (target) {
+          const main = $('#main');
+          main.scrollTo({ top: target.offsetTop - 20, behavior: 'smooth' });
+        }
+      });
+    });
+  }
+
+  // ---------- 本地图片加载（base64 嵌入） ----------
+  function isRelativePath(src) {
+    if (!src) return false;
+    if (/^(https?:|data:|blob:|file:|mailto:|tel:)/i.test(src)) return false;
+    if (src.startsWith('//')) return false;
+    if (src.startsWith('#')) return false;
+    if (src.startsWith('/')) return false;
+    if (/^[a-zA-Z]:[\\\/]/.test(src)) return false;
+    return true;
+  }
+
+  function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }
+
+  function extToMime(ext) {
+    const map = {
+      png: 'image/png',
+      jpg: 'image/jpeg', jpeg: 'image/jpeg',
+      gif: 'image/gif',
+      bmp: 'image/bmp',
+      webp: 'image/webp',
+      svg: 'image/svg+xml',
+      ico: 'image/x-icon',
+      avif: 'image/avif',
+    };
+    return map[ext] || 'application/octet-stream';
+  }
+
+  // 将内容区域内的相对路径图片加载为 base64 data URL
+  async function loadLocalImages(container) {
+    const imgs = container.querySelectorAll('img');
+    if (imgs.length === 0) return;
+    const tauri = window.__TAURI__;
+    const invoke = tauri && tauri.invoke;
+    const baseDir = getBaseDir();
+
+    for (const img of imgs) {
+      const src = img.getAttribute('src') || '';
+      if (!isRelativePath(src)) continue;
+      if (!baseDir) continue;
+      const resolved = joinPath(baseDir, src);
+      try {
+        if (invoke) {
+          // Tauri 环境：调用自定义 read_binary_file 命令读取图片为 base64
+          const base64 = await invoke('read_binary_file', { path: resolved });
+          const ext = (src.split('.').pop() || '').toLowerCase();
+          img.src = 'data:' + extToMime(ext) + ';base64,' + base64;
+        } else {
+          // 浏览器环境：回退到 file://
+          img.src = toAccessibleUrl(resolved);
+        }
+      } catch (e) {
+        console.warn('图片加载失败:', resolved, e);
+      }
+    }
+  }
+
+  // 预处理 Markdown：修复 marked v12 严格遵循 CommonMark flanking 规则导致的加粗/斜体失效问题
+  // 根因：CommonMark 规则下，** 是 left-flanking 的条件是"后面不是标点 OR 前面是空白/标点"
+  //   所以 字母+**+标点 → 后面是标点(✗)且前面是字母(✗) → NOT left-flanking → 无法开启加粗
+  //   同理 标点+**+字母 → NOT right-flanking → 无法关闭加粗
+  // 修复：用状态机跟踪 ** 配对状态，只在上述两种失败场景插入 U+FEFF（零宽字符，JS 中视为空白，渲染不可见）
+  function preprocessMarkdown(md) {
+    const isAlnum = (c) => c && /\p{L}|\p{N}/u.test(c);
+    const isPunct = (c) => c && /[\p{P}\p{S}]/u.test(c);
+    let result = '';
+    let i = 0;
+    let inBold = false;
+    let inItalic = false;
+    while (i < md.length) {
+      // 跳过行内代码（`code`），不处理其中的 **
+      if (md[i] === '`') {
+        let j = i + 1;
+        while (j < md.length && md[j] !== '`') j++;
+        if (j < md.length) {
+          result += md.substring(i, j + 1);
+          i = j + 1;
+          continue;
+        }
+      }
+      // 跳过 ***（加粗斜体）
+      if (md[i] === '*' && i + 2 < md.length && md[i+1] === '*' && md[i+2] === '*') {
+        result += '***';
+        i += 3;
+        continue;
+      }
+      // 处理 **（加粗定界符）
+      if (md[i] === '*' && i + 1 < md.length && md[i+1] === '*') {
+        const before = result.length > 0 ? result[result.length-1] : '';
+        const after = i + 2 < md.length ? md[i+2] : '';
+        if (!inBold) {
+          // 开启定界符：字母+**+标点 → 插入 U+FEFF 使 ** 前面变空白
+          result += (isAlnum(before) && isPunct(after)) ? '\uFEFF**' : '**';
+        } else {
+          // 关闭定界符：标点+**+字母 → 插入 U+FEFF 使 ** 后面变空白
+          result += (isPunct(before) && isAlnum(after)) ? '**\uFEFF' : '**';
+        }
+        inBold = !inBold;
+        i += 2;
+        continue;
+      }
+      // 处理 *（斜体定界符）
+      if (md[i] === '*') {
+        const before = result.length > 0 ? result[result.length-1] : '';
+        const after = i + 1 < md.length ? md[i+1] : '';
+        if (!inItalic) {
+          result += (isAlnum(before) && isPunct(after)) ? '\uFEFF*' : '*';
+        } else {
+          result += (isPunct(before) && isAlnum(after)) ? '*\uFEFF' : '*';
+        }
+        inItalic = !inItalic;
+        i += 1;
+        continue;
+      }
+      result += md[i];
+      i++;
+    }
+    return result;
+  }
+
+  // ---------- 渲染入口 ----------
+  async function renderMarkdown(md) {
+    lastMarkdown = md;
+    const content = $('#content');
+    try {
+      let html = marked.parse(preprocessMarkdown(md), { breaks: settings.breaks, gfm: settings.gfm });
+      html = sanitizeHtml(html);
+      // 清理预处理插入的 U+FEFF（零宽字符，渲染时不可见但可能影响复制等操作）
+      html = html.replace(/\uFEFF/g, '');
+      content.innerHTML = html;
+    } catch (e) {
+      content.innerHTML = '<div class="empty-state"><div class="icon">⚠</div><h2>解析失败</h2><p>' + escapeHtml(e.message) + '</p></div>';
+      return;
+    }
+    enhanceCodeBlocks(content);
+    renderMath(content);
+    buildToc(content);
+    // 加载本地相对路径图片为 base64（Tauri 环境下最可靠的本地图片显示方式）
+    await loadLocalImages(content);
+    if (settings.anchor) {
+      $$('#content h1, #content h2, #content h3').forEach(h => {
+        if (!h.id) return;
+        const a = document.createElement('a');
+        a.className = 'anchor'; a.href = '#' + h.id; a.textContent = '#';
+        h.appendChild(a);
+      });
+    }
+    renderMermaid(content);
+    $('#main').scrollTop = 0;
+    updateProgress();
+    updateTocActive();
+  }
+
+  // ---------- 文件加载 ----------
+  function setCurrentFile(name, path) {
+    currentFileName = name || '';
+    currentFilePath = path || '';
+    $('#fileName').textContent = currentFileName;
+  }
+
+  function loadFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      // 浏览器 FileReader 方式无法获取真实路径，清空 currentFilePath
+      setCurrentFile(file.name, '');
+      const md = e.target.result;
+      saveLastDoc(md, file.name);
+      renderMarkdown(md);
+      toast('已加载: ' + file.name);
+    };
+    reader.readAsText(file, 'UTF-8');
+  }
+
+  // 通过 Tauri 对话框打开文件（可获取完整路径，支持保存回写）
+  async function openFileViaDialog() {
+    const bridge = window.__TAURI_BRIDGE__;
+    if (bridge && bridge.mode === 'tauri') {
+      const path = await bridge.openFile();
+      if (path) {
+        await bridge.loadByPath(path);
+      }
+      return;
+    }
+    // 浏览器模式：退回原生 file input
+    $('#fileInput').click();
+  }
+
+  async function loadRemote(url) {
+    try {
+      const res = await fetch(url);
+      const md = await res.text();
+      currentFileName = url.split('/').pop() || 'remote.md';
+      $('#fileName').textContent = currentFileName;
+      renderMarkdown(md);
+      toast('已加载远程文件');
+    } catch (e) {
+      toast('加载远程文件失败: ' + e.message);
+    }
+  }
+
+  // ---------- 导出 HTML ----------
+  // 导出时内联 KaTeX CSS（woff2 字体转 data URI，移除 woff/ttf 引用），完全自包含
+  let katexInlineCss = null;
+  async function getKatexInlineCss() {
+    if (katexInlineCss !== null) return katexInlineCss;
+    try {
+      const resp = await fetch('resources/katex.min.css');
+      let css = await resp.text();
+      // 收集所有 woff2 字体引用，替换为 base64 data URI
+      const fontNames = [...new Set([...css.matchAll(/url\(fonts\/([^)]+\.woff2)\)/g)].map(m => m[1]))];
+      for (const name of fontNames) {
+        try {
+          const fresp = await fetch('resources/fonts/' + name);
+          const buf = await fresp.arrayBuffer();
+          const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+          css = css.replace(new RegExp('url\\(fonts/' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\)', 'g'),
+            "url(data:font/woff2;base64," + b64 + ")");
+        } catch(_) {}
+      }
+      // 移除 woff 和 ttf 的 src 条目（保留 woff2），减小体积
+      css = css.replace(/,\s*url\(fonts\/[^)]+\.woff\)/g, '');
+      css = css.replace(/,\s*url\(fonts\/[^)]+\.ttf\)/g, '');
+      katexInlineCss = css;
+      return css;
+    } catch (e) {
+      katexInlineCss = ''; // 失败时返回空，避免反复重试
+      return '';
+    }
+  }
+
+  async function exportHtml() {
+    if (!lastMarkdown) { toast('没有可导出的内容'); return; }
+    let html = marked.parse(preprocessMarkdown(lastMarkdown), { breaks: settings.breaks, gfm: settings.gfm });
+    html = sanitizeHtml(html);
+    html = html.replace(/\uFEFF/g, '');
+    let css = '';
+    for (const s of document.styleSheets) {
+      try { css += Array.from(s.cssRules).map(r => r.cssText).join('\n') + '\n'; } catch(_) {}
+    }
+    // 内联 KaTeX 样式（含 woff2 字体 data URI），使导出 HTML 无需联网
+    const katexCss = await getKatexInlineCss();
+    const full = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + (currentFileName||'document') + '</title>' +
+      '<style>' + katexCss + '\n' + css + '</style></head><body><div class="content">' + html + '</div></body></html>';
+    const blob = new Blob([full], { type: 'text/html;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (currentFileName || 'document').replace(/\.md$/, '') + '.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('已导出 HTML');
+  }
+
+  // ---------- 进度条 / 回到顶部 ----------
+  function updateProgress() {
+    const main = $('#main');
+    if (!main) return;
+    const h = main.scrollHeight - main.clientHeight;
+    const p = h > 0 ? (main.scrollTop / h) * 100 : 0;
+    $('#progressBar').style.width = p + '%';
+    const btn = $('#btnTop');
+    if (main.scrollTop > 300) btn.classList.add('show'); else btn.classList.remove('show');
+  }
+
+  // ---------- 目录滚动高亮（scroll spy） ----------
+  let tocSpyTimer = null;
+  function updateTocActive() {
+    const main = $('#main');
+    if (!main) return;
+    const headings = $$('#content h1, #content h2, #content h3, #content h4, #content h5, #content h6');
+    if (headings.length === 0) return;
+    const scrollTop = main.scrollTop;
+    const offset = 80; // 顶部偏移
+    let current = headings[0];
+    for (const h of headings) {
+      if (h.offsetTop - offset <= scrollTop) current = h;
+      else break;
+    }
+    if (!current) return;
+    const id = current.id;
+    $$('#toc a').forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
+    // 目录自动滚动使高亮项可见
+    const active = $('#toc a.active');
+    if (active) {
+      const sidebar = $('#sidebar');
+      const aTop = active.offsetTop;
+      const aBottom = aTop + active.offsetHeight;
+      const sbTop = sidebar.scrollTop;
+      const sbBottom = sbTop + sidebar.clientHeight;
+      if (aTop < sbTop + 40) sidebar.scrollTo({ top: aTop - 40, behavior: 'smooth' });
+      else if (aBottom > sbBottom - 40) sidebar.scrollTo({ top: aBottom - sidebar.clientHeight + 40, behavior: 'smooth' });
+    }
+  }
+  function onMainScroll() {
+    updateProgress();
+    // 节流：避免高频计算
+    if (tocSpyTimer) return;
+    tocSpyTimer = setTimeout(() => { tocSpyTimer = null; updateTocActive(); }, 80);
+  }
+
+  // ---------- 动态填充 chips ----------
+  function populateChips() {
+    const themeBox = $('#themeChips');
+    themeBox.innerHTML = THEMES.map(t => '<button class="chip' + (t.id===settings.theme?' active':'') + '" data-val="' + t.id + '">' + t.name + '</button>').join('');
+    themeBox.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => {
+      themeBox.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      applyTheme(b.dataset.val);
+    }));
+    const fontBox = $('#fontChips');
+    fontBox.innerHTML = FONTS.map(f => '<button class="chip' + (f.id===settings.font?' active':'') + '" data-val="' + f.id + '">' + f.name + '</button>').join('');
+    fontBox.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => {
+      fontBox.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      settings.font = b.dataset.val;
+      applySettings(); saveSettings();
+    }));
+    const sel = $('#codeThemeSelect');
+    sel.innerHTML = CODE_THEMES.map(t => '<option value="' + t.id + '"' + (t.id===settings.codeTheme?' selected':'') + '>' + t.label + '</option>').join('');
+    sel.addEventListener('change', () => {
+      settings.codeTheme = sel.value;
+      loadCodeTheme(sel.value);
+      saveSettings();
+    });
+  }
+
+  // ---------- 事件绑定 ----------
+  $('#fileInput').addEventListener('change', e => loadFile(e.target.files[0]));
+  $('#btnOpen').addEventListener('click', openFileViaDialog);
+  $('#btnOpenEmpty').addEventListener('click', openFileViaDialog);
+
+  function applyTheme(id) {
+    document.documentElement.setAttribute('data-theme', id);
+    settings.theme = id; saveSettings();
+    $$('#themeChips .chip').forEach(b => b.classList.toggle('active', b.dataset.val === id));
+    rerenderMermaidOnThemeChange();
+  }
+
+  const drawer = $('#drawer');
+  const backdrop = $('#drawerBackdrop');
+  function openDrawer() { drawer.classList.add('open'); backdrop.classList.add('open'); }
+  function closeDrawer() { drawer.classList.remove('open'); backdrop.classList.remove('open'); }
+  $('#btnSettings').addEventListener('click', openDrawer);
+  $('#btnCloseDrawer').addEventListener('click', closeDrawer);
+  backdrop.addEventListener('click', closeDrawer);
+
+  function bindSlider(rangeId, valId, key, suffix) {
+    const el = $('#' + rangeId);
+    const val = $('#' + valId);
+    el.value = settings[key];
+    val.textContent = settings[key] + (suffix || '');
+    el.addEventListener('input', () => {
+      settings[key] = parseInt(el.value);
+      val.textContent = el.value + (suffix || '');
+      applySettings(); saveSettings();
+    });
+  }
+  bindSlider('sizeRange', 'sizeValue', 'size', 'px');
+  bindSlider('lhRange', 'lhValue', 'lh', '');
+  bindSlider('widthRange', 'widthValue', 'width', 'px');
+
+  function bindSwitch(id, key) {
+    const el = $('#' + id);
+    el.classList.toggle('on', settings[key]);
+    el.addEventListener('click', () => {
+      settings[key] = !settings[key];
+      el.classList.toggle('on', settings[key]);
+      applySettings(); saveSettings();
+    });
+  }
+  bindSwitch('swBreaks', 'breaks');
+  bindSwitch('swGfm', 'gfm');
+  bindSwitch('swSanitize', 'sanitize');
+  bindSwitch('swMath', 'math');
+  bindSwitch('swMermaid', 'mermaid');
+  bindSwitch('swAnchor', 'anchor');
+
+  $('#btnReset').addEventListener('click', () => {
+    settings = Object.assign({}, DEFAULTS);
+    saveSettings(); applySettings();
+    applyTheme(settings.theme);
+    loadCodeTheme(settings.codeTheme);
+    populateChips();
+    toast('已重置为默认设置');
+  });
+
+  function loadCodeTheme(id) {
+    $('#hljs-theme').href = HLJS_BASE + id + '.min.css';
+  }
+
+  $('#btnSidebar').addEventListener('click', () => $('#sidebar').classList.toggle('collapsed'));
+  $('#btnTop').addEventListener('click', () => $('#main').scrollTo({ top: 0, behavior: 'smooth' }));
+  $('#main').addEventListener('scroll', onMainScroll);
+  $('#btnPrint').addEventListener('click', printViaIframe);
+  $('#btnExport').addEventListener('click', exportHtml);
+
+  // 关于弹窗
+  $('#btnAbout').addEventListener('click', () => $('#aboutOverlay').classList.add('show'));
+  $('#btnCloseAbout').addEventListener('click', () => $('#aboutOverlay').classList.remove('show'));
+  $('#aboutOverlay').addEventListener('click', e => {
+    if (e.target === $('#aboutOverlay')) $('#aboutOverlay').classList.remove('show');
+  });
+
+  // 通过隐藏 iframe 打印：使用 document.write 写入完整 HTML 文档，
+  // 使 iframe 成为独立的 about:blank 文档，避免页脚显示 https://tauri.localhost
+  function printViaIframe() {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(iframe);
+
+    const iframeDoc = iframe.contentDocument;
+    const iframeWin = iframe.contentWindow;
+
+    // 收集所有样式表的 href
+    const styleLinks = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+      .map(l => l.href).filter(Boolean);
+    const styleTags = Array.from(document.querySelectorAll('style'))
+      .map(s => s.outerHTML).join('');
+
+    // 复制正文内容
+    const content = $('#content');
+    let bodyHtml = content ? content.innerHTML : '';
+
+    // 构建完整 HTML 文档，写入 iframe
+    iframeDoc.open();
+    iframeDoc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title></title>`);
+    styleLinks.forEach(href => {
+      iframeDoc.write(`<link rel="stylesheet" href="${href}">`);
+    });
+    iframeDoc.write(styleTags);
+    iframeDoc.write(`</head><body>${bodyHtml}</body></html>`);
+    iframeDoc.close();
+
+    // 确保 Mermaid SVG 和图片在打印时宽度自适应
+    const fixSvg = () => {
+      iframeDoc.querySelectorAll('.mermaid svg').forEach(svg => {
+        svg.setAttribute('width', '100%');
+        svg.removeAttribute('height');
+        svg.style.width = '100%';
+        svg.style.maxWidth = '100%';
+        svg.style.height = 'auto';
+        svg.style.display = 'block';
+      });
+      iframeDoc.querySelectorAll('.mermaid-wrap').forEach(w => {
+        w.style.width = '100%';
+        w.style.maxWidth = '100%';
+        w.style.overflow = 'hidden';
+        w.style.padding = '0';
+      });
+      // 图片：强制按页面宽度缩放
+      iframeDoc.querySelectorAll('img').forEach(img => {
+        img.style.maxWidth = '100%';
+        img.style.width = 'auto';
+        img.style.height = 'auto';
+        img.style.maxHeight = '100vh';
+        img.style.objectFit = 'contain';
+      });
+    };
+    fixSvg();
+
+    // 调用打印
+    iframeWin.focus();
+    iframeWin.print();
+
+    // 打印对话框关闭后移除 iframe
+    setTimeout(() => {
+      try { document.body.removeChild(iframe); } catch (_) {}
+    }, 1000);
+  }
+
+  // ---------- 字体大小控制 ----------
+  const fontsizePopup = $('#fontsizePopup');
+  const fontsizeSlider = $('#fontsizeSlider');
+  const fontsizeValue = $('#fontsizeValue');
+  const DEFAULT_FONT_SIZE = 16;
+
+  function applyFontSize(px) {
+    document.documentElement.style.setProperty('--content-size', px + 'px');
+    fontsizeSlider.value = px;
+    fontsizeValue.textContent = px + 'px';
+    // 持久化（仅影响显示，打印字体由 @media print 的 !important 固定为 12pt）
+    try { localStorage.setItem('mdreader:fontsize', px); } catch (_) {}
+  }
+
+  // 恢复保存的字体大小
+  try {
+    const saved = localStorage.getItem('mdreader:fontsize');
+    if (saved) applyFontSize(parseInt(saved, 10) || DEFAULT_FONT_SIZE);
+  } catch (_) {}
+
+  $('#btnFontSize').addEventListener('click', e => {
+    e.stopPropagation();
+    fontsizePopup.classList.toggle('show');
+  });
+  document.addEventListener('click', e => {
+    if (!fontsizePopup.contains(e.target) && e.target.id !== 'btnFontSize' && !e.target.closest('#btnFontSize')) {
+      fontsizePopup.classList.remove('show');
+    }
+  });
+  fontsizeSlider.addEventListener('input', () => {
+    applyFontSize(parseInt(fontsizeSlider.value, 10));
+  });
+
+  // ---------- Mermaid 图形全屏查看 ----------
+  const mermaidFullscreen = $('#mermaidFullscreen');
+  const mermaidFullscreenBody = $('#mermaidFullscreenBody');
+  const mermaidFullscreenClose = $('#mermaidFullscreenClose');
+
+  function openMermaidFullscreen(svgEl) {
+    // 克隆 SVG 并确保它能自适应放大
+    const clone = svgEl.cloneNode(true);
+    clone.removeAttribute('width');
+    clone.removeAttribute('height');
+    clone.style.width = 'auto';
+    clone.style.height = 'auto';
+    clone.style.maxWidth = '100%';
+    clone.style.maxHeight = '100%';
+    mermaidFullscreenBody.innerHTML = '';
+    mermaidFullscreenBody.appendChild(clone);
+    mermaidFullscreen.classList.add('show');
+  }
+
+  // 图片点击全屏查看
+  function openImageFullscreen(imgEl) {
+    const clone = imgEl.cloneNode(true);
+    clone.style.maxWidth = '100%';
+    clone.style.maxHeight = '100%';
+    clone.style.width = 'auto';
+    clone.style.height = 'auto';
+    clone.style.objectFit = 'contain';
+    mermaidFullscreenBody.innerHTML = '';
+    mermaidFullscreenBody.appendChild(clone);
+    mermaidFullscreen.classList.add('show');
+  }
+  function closeMermaidFullscreen() {
+    mermaidFullscreen.classList.remove('show');
+    mermaidFullscreenBody.innerHTML = '';
+  }
+  mermaidFullscreenClose.addEventListener('click', closeMermaidFullscreen);
+  mermaidFullscreen.addEventListener('click', e => {
+    if (e.target === mermaidFullscreen) closeMermaidFullscreen();
+  });
+
+  // ---------- 编辑功能 ----------
+  const editorOverlay = $('#editorOverlay');
+  const editorTextarea = $('#editorTextarea');
+  const editorTitle = $('#editorTitle');
+
+  function openEditor() {
+    if (!lastMarkdown) {
+      // 没有内容时直接以空白文档启动编辑器
+      lastMarkdown = '';
+      currentFileName = currentFileName || 'untitled.md';
+      $('#fileName').textContent = currentFileName;
+    }
+    editorTextarea.value = lastMarkdown;
+    editorTitle.textContent = currentFileName ? ('编辑：' + currentFileName) : '编辑文档';
+    editorOverlay.classList.add('show');
+    // 光标置于开头
+    setTimeout(() => {
+      editorTextarea.focus();
+      editorTextarea.setSelectionRange(0, 0);
+      editorTextarea.scrollTop = 0;
+    }, 0);
+  }
+
+  function closeEditor() {
+    editorOverlay.classList.remove('show');
+  }
+
+  async function saveEditor() {
+    const md = editorTextarea.value;
+    const hasChange = md !== lastMarkdown;
+    lastMarkdown = md;
+    saveLastDoc(md, currentFileName);
+    renderMarkdown(md);
+
+    // 写回磁盘文件（Tauri 环境且已知文件路径时）
+    const bridge = window.__TAURI_BRIDGE__;
+    if (bridge && bridge.mode === 'tauri' && currentFilePath) {
+      const ok = await bridge.saveFile(currentFilePath, md);
+      closeEditor();
+      if (ok) toast(hasChange ? '已保存到文件并重新渲染' : '已保存');
+      else toast('已重新渲染（写盘失败）');
+      return;
+    }
+    closeEditor();
+    toast(hasChange ? '已保存并重新渲染' : '内容无变化');
+  }
+
+  $('#btnEdit').addEventListener('click', openEditor);
+  $('#btnEditorCancel').addEventListener('click', closeEditor);
+  $('#btnEditorSave').addEventListener('click', saveEditor);
+
+  // 编辑框快捷键
+  editorTextarea.addEventListener('keydown', e => {
+    // Ctrl/Cmd + S 保存
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault();
+      e.stopPropagation();
+      saveEditor();
+      return;
+    }
+    // Esc 关闭（有变更时仍直接关闭，由用户自行决定是否再保存）
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      closeEditor();
+      return;
+    }
+    // Tab 插入两个空格，避免焦点跳出
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const start = editorTextarea.selectionStart;
+      const end = editorTextarea.selectionEnd;
+      const value = editorTextarea.value;
+      if (e.shiftKey) {
+        // 反向缩进
+        const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+        if (lineStart <= start && value.slice(lineStart, lineStart + 2) === '  ') {
+          editorTextarea.value = value.slice(0, lineStart) + value.slice(lineStart + 2);
+          editorTextarea.selectionStart = editorTextarea.selectionEnd = start - 2;
+        }
+      } else {
+        editorTextarea.value = value.slice(0, start) + '  ' + value.slice(end);
+        editorTextarea.selectionStart = editorTextarea.selectionEnd = start + 2;
+      }
+    }
+  });
+
+  // 拖拽
+  ['dragenter','dragover'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); $('#dropOverlay').classList.add('show'); }));
+  ['dragleave','drop'].forEach(ev => document.addEventListener(ev, e => {
+    e.preventDefault();
+    if (ev === 'dragleave' && e.relatedTarget && document.contains(e.relatedTarget)) return;
+    $('#dropOverlay').classList.remove('show');
+  }));
+  document.addEventListener('drop', e => {
+    e.preventDefault();
+    // Tauri 模式下由 Rust 的 FileDrop 事件处理（可获取完整路径）
+    const bridge = window.__TAURI_BRIDGE__;
+    if (bridge && bridge.mode === 'tauri') return;
+    const f = e.dataTransfer.files[0];
+    if (f && /\.(md|markdown|txt)$/i.test(f.name)) loadFile(f);
+    else toast('请拖入 .md 文件');
+  });
+
+  // 粘贴
+  document.addEventListener('paste', e => {
+    if (e.clipboardData) {
+      const text = e.clipboardData.getData('text');
+      if (text && text.length > 50) {
+        e.preventDefault();
+        currentFileName = 'pasted.md';
+        $('#fileName').textContent = currentFileName;
+        renderMarkdown(text);
+        toast('已渲染剪贴板内容');
+      }
+    }
+  });
+
+  // 快捷键
+  document.addEventListener('keydown', e => {
+    // 编辑器打开时，快捷键交给编辑器自身处理，避免误触发导出/抽屉等
+    const editorOpen = editorOverlay && editorOverlay.classList.contains('show');
+    if (editorOpen) return;
+    if ((e.ctrlKey || e.metaKey) && e.key === 'o') { e.preventDefault(); openFileViaDialog(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') { e.preventDefault(); $('#sidebar').classList.toggle('collapsed'); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') { e.preventDefault(); printViaIframe(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'e') { e.preventDefault(); openEditor(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); exportHtml(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === ',') { e.preventDefault(); openDrawer(); }
+    if (e.key === 'Escape') {
+      closeDrawer();
+      closeMermaidFullscreen();
+      fontsizePopup.classList.remove('show');
+    }
+  });
+
+  // Mermaid 图形 / 图片点击全屏查看（事件委托，覆盖动态渲染的内容）
+  $('#content').addEventListener('click', e => {
+    // Mermaid 图形
+    const wrap = e.target.closest('.mermaid-wrap');
+    if (wrap) {
+      const svg = wrap.querySelector('svg');
+      if (svg) openMermaidFullscreen(svg);
+      return;
+    }
+    // 图片（排除 Mermaid 内部的图片）
+    if (e.target.tagName === 'IMG' && !e.target.closest('.mermaid-wrap')) {
+      openImageFullscreen(e.target);
+    }
+  });
+
+  // ---------- 初始化 ----------
+  loadSettings();
+  applySettings();
+  configureMarked();
+  populateChips();
+  applyTheme(settings.theme);
+  loadCodeTheme(settings.codeTheme);
+
+  const params = new URLSearchParams(location.search);
+  if (params.get('url')) loadRemote(params.get('url'));
+  // 启动时保持未打开文档状态（不自动恢复上次内容）
+
+  // ---------- 打印前：强制 Mermaid SVG 适配页面宽度 ----------
+  // Mermaid 渲染出的 SVG 可能带有固定 width / 内联 style，纯 CSS !important
+  // 在部分 WebView 打印引擎下仍可能不生效，这里在 beforeprint 时直接改写 DOM 属性。
+  function prepareMermaidForPrint() {
+    $$('.mermaid svg').forEach(svg => {
+      svg.setAttribute('width', '100%');
+      svg.removeAttribute('height');
+      svg.style.width = '100%';
+      svg.style.maxWidth = '100%';
+      svg.style.height = 'auto';
+      svg.style.display = 'block';
+    });
+    $$('.mermaid-wrap').forEach(w => {
+      w.style.width = '100%';
+      w.style.maxWidth = '100%';
+      w.style.overflow = 'hidden';
+      w.style.padding = '0';
+    });
+  }
+  window.addEventListener('beforeprint', prepareMermaidForPrint);
+
+  // 暴露给 Tauri 桥接调用
+  window.renderMarkdown = renderMarkdown;
+  window.setCurrentFile = setCurrentFile;
+  window.toast = toast;
+})();
+</script>
+</body>
+</html>
