@@ -17,7 +17,9 @@ param(
     [switch]$Draft
 )
 
-$ErrorActionPreference = "Stop"
+# 注意：不能用 Stop——PS 5.1 下 git/cargo/gh 的 stderr 输出会被当作异常中断脚本；
+# 关键步骤均通过 $LASTEXITCODE 或远程状态校验兜底
+$ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
 
