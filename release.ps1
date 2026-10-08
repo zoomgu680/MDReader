@@ -42,19 +42,8 @@ if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
-# 检查 gh CLI
-if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-    Log-Err "未找到 gh CLI，请先安装 GitHub CLI 并执行 gh auth login"
-    exit 1
-}
-
-# 检查 gh 认证状态
-$ghAuth = gh auth status 2>&1
-if ($LASTEXITCODE -ne 0) {
-    Log-Err "gh 未认证，请先执行 gh auth login"
-    $ghAuth | ForEach-Object { Write-Host $_ -ForegroundColor Red }
-    exit 1
-}
+# 注意：gh CLI 的可用性/认证检查放在第 7 步（真正用到时），
+# 这样即使 gh 未就绪，版本号更新/构建/提交/打 tag/推送也已完成
 
 # 检查工作区是否干净
 $status = git status --porcelain
@@ -235,7 +224,13 @@ Log-Ok "main 与 tag $tag 已推送到远程"
 Step "6/7 生成 Release Notes"
 # ============================================================
 
-if ([string]::IsNullOrWhiteSpace($Notes)) {
+if (-not [string]::IsNullOrWhiteSpace($Notes)) {
+    # -Notes 传入的是文本内容，写入临时文件供 --notes-file 使用
+    $notesPath = Join-Path $env:TEMP "mdreader-release-notes-$Version.md"
+    $Notes | Set-Content $notesPath -Encoding UTF8
+    $Notes = $notesPath
+    Log-Ok "已使用指定的 Release Notes 文本"
+} else {
     $notesPath = Join-Path $env:TEMP "mdreader-release-notes-$Version.md"
     @"
 # $product $tag
@@ -268,6 +263,20 @@ MIT / Apache-2.0 双协议
 # ============================================================
 Step "7/7 创建 GitHub Release 并上传安装包"
 # ============================================================
+
+# gh CLI 检查放在最后：即使未就绪，前面的构建/tag 推送均已完成，可手动补发
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+    Log-Err "未找到 gh CLI，请安装 GitHub CLI 后执行: gh auth login"
+    exit 1
+}
+$ghAuth = gh auth status 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Log-Err "gh 未认证。请在终端执行: gh auth login"
+    Write-Host "`n认证后可用以下命令手动完成发布（安装包已就绪）：" -ForegroundColor Yellow
+    Write-Host "  gh release create $tag `"$offlineExe`" `"$onlineExe`" --title `"$product $tag`" --notes-file `"$Notes`" --latest" -ForegroundColor Yellow
+    Write-Host "`n（Release Notes 文件已保留: $Notes）" -ForegroundColor Yellow
+    exit 1
+}
 
 $releaseArgs = @("release", "create", $tag,
     $offlineExe, $onlineExe,
