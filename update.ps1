@@ -88,9 +88,14 @@ if ($NoPush) {
 
 Log-Info "推送到 origin/main..."
 $pushResult = git push origin main 2>&1
-if ($LASTEXITCODE -ne 0) {
-    Log-Err "git push 失败:"
+# 注意：push 可能因沙箱拦截 ~/.gitconfig 写入返回非零但实际成功，
+# 因此用远程状态校验代替 exit code 判断
+$localHead = (git rev-parse HEAD).Trim()
+$remoteMain = (git ls-remote origin refs/heads/main) -replace '\s.*$',''
+if ($localHead -eq $remoteMain) {
+    Log-Ok "推送成功"
+} else {
+    Log-Err "推送失败（远程为 $remoteMain，本地为 $localHead）:"
     $pushResult | ForEach-Object { Write-Host $_ -ForegroundColor Red }
     exit 1
 }
-Log-Ok "推送成功"

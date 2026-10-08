@@ -1,6 +1,7 @@
 ﻿# ============================================================
 # MDReader - Release 发布脚本 (Windows PowerShell)
-# 用途：更新版本号 -> 构建双安装包 -> 打 tag -> 创建 GitHub Release
+# 用途：更新版本号 -> 构建双安装包 -> 提交+打 tag -> 创建 GitHub Release
+# 顺序说明：构建成功后才提交并打 tag，避免构建失败时留下无效远程 tag
 # 用法：
 #   .\release.ps1 -Version 0.1.1                        # 发布 0.1.1（含构建）
 #   .\release.ps1 -Version 0.1.1 -SkipBuild             # 跳过构建，只发版
@@ -64,13 +65,14 @@ if ($status) {
 }
 
 # ============================================================
-Step "1/7 更新版本号到 $Version"
+Step "1/7 更新版本号到 $Version（tauri.conf.json / Cargo.toml / index.html）"
 # ============================================================
 
 $tauriConf = Join-Path $root "src-tauri\tauri.conf.json"
 $cargoToml = Join-Path $root "src-tauri\Cargo.toml"
+$indexHtml = Join-Path $root "index.html"
 
-# tauri.conf.json
+# tauri.conf.json（仅 package.version 一个三段式字段）
 $confContent = Get-Content $tauriConf -Raw -Encoding UTF8
 $confNew = $confContent -replace '"version":\s*"\d+\.\d+\.\d+"', "`"version`": `"$Version`""
 if ($confNew -eq $confContent) {
@@ -80,9 +82,9 @@ if ($confNew -eq $confContent) {
     Log-Ok "tauri.conf.json 版本已更新为 $Version"
 }
 
-# Cargo.toml
+# Cargo.toml（(?m) 启用多行模式，^version 只匹配 [package] 段行首的版本号）
 $cargoContent = Get-Content $cargoToml -Raw -Encoding UTF8
-$cargoNew = $cargoContent -replace '^version\s*=\s*"\d+\.\d+\.\d+"', "version = `"$Version`""
+$cargoNew = $cargoContent -replace '(?m)^version\s*=\s*"\d+\.\d+\.\d+"', "version = `"$Version`""
 if ($cargoNew -eq $cargoContent) {
     Log-Warn "Cargo.toml 中未找到版本号字段，可能已是 $Version"
 } else {
@@ -90,8 +92,18 @@ if ($cargoNew -eq $cargoContent) {
     Log-Ok "Cargo.toml 版本已更新为 $Version"
 }
 
+# index.html（关于弹窗中的版本号显示）
+$htmlContent = Get-Content $indexHtml -Raw -Encoding UTF8
+$htmlNew = $htmlContent -replace '版本\s*\d+\.\d+\.\d+', "版本 $Version"
+if ($htmlNew -ne $htmlContent) {
+    [System.IO.File]::WriteAllText($indexHtml, $htmlNew, [System.Text.UTF8Encoding]::new($false))
+    Log-Ok "index.html 关于弹窗版本已更新为 $Version"
+} else {
+    Log-Warn "index.html 中未找到版本号文本，可能已是 $Version"
+}
+
 # ============================================================
-Step "2/7 同步 dist 并提交版本变更"
+Step "2/7 同步 dist"
 # ============================================================
 
 $dist = Join-Path $root "dist"
@@ -102,38 +114,8 @@ Copy-Item (Join-Path $root "index.html") (Join-Path $dist "index.html") -Force
 Copy-Item (Join-Path $root "resources\*") (Join-Path $dist "resources") -Recurse -Force
 Log-Ok "dist 同步完成"
 
-git add --all
-git commit -m "Bump version to $Version" | Out-Null
-Log-Ok "版本变更已提交: $(git log --oneline -1)"
-
 # ============================================================
-Step "3/7 创建并推送 tag $tag"
-# ============================================================
-
-# 检查 tag 是否已存在
-$tagExists = git tag -l $tag
-if ($tagExists) {
-    Log-Warn "tag $tag 已存在，是否删除后重建？(y/N)"
-    $confirm = Read-Host
-    if ($confirm -ne 'y' -and $confirm -ne 'Y') { exit 0 }
-    git tag -d $tag | Out-Null
-    git push origin ":refs/tags/$tag" 2>$null
-}
-
-$tagMsg = "$product $tag`n`n版本说明见 Release 页面。`n`n版权所有 (C) $(Get-Date -Format yyyy) 中国邮政集团有限公司浙江省信息技术中心"
-git tag -a $tag -m $tagMsg
-Log-Ok "本地 tag $tag 已创建"
-
-git push origin $tag 2>&1 | Out-Null
-if ($LASTEXITCODE -ne 0) {
-    Log-Err "tag 推送失败"
-    exit 1
-}
-git push origin main 2>&1 | Out-Null
-Log-Ok "tag 与 main 已推送"
-
-# ============================================================
-Step "4/7 构建离线安装包 (offlineInstaller)"
+Step "3/7 构建离线安装包 (offlineInstaller)"
 # ============================================================
 
 $bundleDir = Join-Path $root "src-tauri\target\release\bundle\nsis"
@@ -148,11 +130,11 @@ $confContent = $confContent -replace '"type":\s*"downloadBootstrapper"', '"type"
 if ($SkipBuild) {
     Log-Warn "跳过构建 (-SkipBuild)"
 } else {
-    Log-Info "构建中（首次约 3-5 分钟）..."
+    Log-Info "构建中（增量约 1-3 分钟，首次约 3-5 分钟）..."
     Set-Location (Join-Path $root "src-tauri")
     cargo tauri build --bundles nsis 2>&1 | Select-Object -Last 5 | ForEach-Object { Write-Host "        $_" -ForegroundColor Gray }
+    if ($LASTEXITCODE -ne 0) { Set-Location $root; Log-Err "离线包构建失败"; exit 1 }
     Set-Location $root
-    if ($LASTEXITCODE -ne 0) { Log-Err "离线包构建失败"; exit 1 }
 }
 
 # 重命名
@@ -170,7 +152,7 @@ if (Test-Path $offlineExe) {
 }
 
 # ============================================================
-Step "5/7 构建在线安装包 (downloadBootstrapper)"
+Step "4/7 构建在线安装包 (downloadBootstrapper)"
 # ============================================================
 
 $confContent = Get-Content $tauriConf -Raw -Encoding UTF8
@@ -181,8 +163,8 @@ if (-not $SkipBuild) {
     Log-Info "构建中..."
     Set-Location (Join-Path $root "src-tauri")
     cargo tauri build --bundles nsis 2>&1 | Select-Object -Last 5 | ForEach-Object { Write-Host "        $_" -ForegroundColor Gray }
+    if ($LASTEXITCODE -ne 0) { Set-Location $root; Log-Err "在线包构建失败"; exit 1 }
     Set-Location $root
-    if ($LASTEXITCODE -ne 0) { Log-Err "在线包构建失败"; exit 1 }
 }
 
 $builtExe = Join-Path $bundleDir "MDReader_${Version}_x64-setup.exe"
@@ -202,6 +184,52 @@ if (Test-Path $onlineExe) {
 $confContent = Get-Content $tauriConf -Raw -Encoding UTF8
 $confContent = $confContent -replace '"type":\s*"downloadBootstrapper"', '"type": "offlineInstaller"'
 [System.IO.File]::WriteAllText($tauriConf, $confContent, [System.Text.UTF8Encoding]::new($false))
+
+# ============================================================
+Step "5/7 提交版本变更并创建 tag（构建成功后才执行）"
+# ============================================================
+
+# 提交（此时 Cargo.lock 已由构建更新为 $Version，一并纳入）
+git add --all
+$commitResult = git commit -m "Bump version to $Version" 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Log-Err "git commit 失败:"
+    $commitResult | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+    exit 1
+}
+Log-Ok "版本变更已提交: $(git log --oneline -1)"
+
+# 检查 tag 是否已存在
+$tagExists = git tag -l $tag
+if ($tagExists) {
+    Log-Warn "tag $tag 已存在，是否删除后重建？(y/N)"
+    $confirm = Read-Host
+    if ($confirm -ne 'y' -and $confirm -ne 'Y') { exit 0 }
+    git tag -d $tag | Out-Null
+    git push origin ":refs/tags/$tag" 2>$null
+}
+
+$tagMsg = "$product $tag`n`n版本说明见 Release 页面。`n`n版权所有 (C) $(Get-Date -Format yyyy) 中国邮政集团有限公司浙江省信息技术中心"
+git tag -a $tag -m $tagMsg
+Log-Ok "本地 tag $tag 已创建"
+
+# 推送 main 和 tag
+git push origin main 2>$null
+git push origin $tag 2>$null
+# 注意：push 可能因沙箱拦截 ~/.gitconfig 写入返回非零但实际成功，
+# 因此用远程状态校验代替 exit code 判断
+$localHead = (git rev-parse HEAD).Trim()
+$remoteMain = (git ls-remote origin refs/heads/main) -replace '\s.*$',''
+$remoteTag = git ls-remote origin "refs/tags/$tag"
+if ($remoteMain -ne $localHead) {
+    Log-Err "main 推送失败（远程为 $remoteMain，本地为 $localHead）"
+    exit 1
+}
+if (-not $remoteTag) {
+    Log-Err "tag $tag 推送失败"
+    exit 1
+}
+Log-Ok "main 与 tag $tag 已推送到远程"
 
 # ============================================================
 Step "6/7 生成 Release Notes"

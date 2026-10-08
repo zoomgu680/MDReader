@@ -1307,19 +1307,10 @@
     const styleTags = Array.from(document.querySelectorAll('style'))
       .map(s => s.outerHTML).join('');
 
-    // 复制正文内容
+    // 复制正文内容 —— 必须保留 .content 包裹层，
+    // 因为打印样式（表格/代码块/换行规则）都以 .content 为作用域选择器
     const content = $('#content');
     let bodyHtml = content ? content.innerHTML : '';
-
-    // 构建完整 HTML 文档，写入 iframe
-    iframeDoc.open();
-    iframeDoc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title></title>`);
-    styleLinks.forEach(href => {
-      iframeDoc.write(`<link rel="stylesheet" href="${href}">`);
-    });
-    iframeDoc.write(styleTags);
-    iframeDoc.write(`</head><body>${bodyHtml}</body></html>`);
-    iframeDoc.close();
 
     // 确保 Mermaid SVG 和图片在打印时宽度自适应
     const fixSvg = () => {
@@ -1346,16 +1337,42 @@
         img.style.objectFit = 'contain';
       });
     };
-    fixSvg();
 
-    // 调用打印
-    iframeWin.focus();
-    iframeWin.print();
+    // 打印动作：等样式与字体就绪后执行（只执行一次）
+    let printed = false;
+    const doPrint = () => {
+      if (printed) return;
+      printed = true;
+      fixSvg();
+      iframeWin.focus();
+      iframeWin.print();
+      // 打印对话框关闭后移除 iframe
+      setTimeout(() => {
+        try { document.body.removeChild(iframe); } catch (_) {}
+      }, 1000);
+    };
 
-    // 打印对话框关闭后移除 iframe
-    setTimeout(() => {
-      try { document.body.removeChild(iframe); } catch (_) {}
-    }, 1000);
+    // 等 iframe 文档加载完成（含 style.css / katex / hljs 等外部样式表）再打印，
+    // 否则样式尚未应用，表格/代码框会以无格式纯文本输出
+    iframe.addEventListener('load', () => {
+      if (iframeDoc.fonts && iframeDoc.fonts.ready) {
+        iframeDoc.fonts.ready.then(doPrint, doPrint);
+      } else {
+        setTimeout(doPrint, 100);
+      }
+    });
+    // 兜底：若 load 事件未触发（极端情况），2 秒后强制打印
+    setTimeout(doPrint, 2000);
+
+    // 构建完整 HTML 文档，写入 iframe
+    iframeDoc.open();
+    iframeDoc.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title></title>`);
+    styleLinks.forEach(href => {
+      iframeDoc.write(`<link rel="stylesheet" href="${href}">`);
+    });
+    iframeDoc.write(styleTags);
+    iframeDoc.write(`</head><body><div class="content">${bodyHtml}</div></body></html>`);
+    iframeDoc.close();
   }
 
   // ---------- 字体大小控制 ----------
