@@ -1453,6 +1453,115 @@
   const editorTextarea = $('#editorTextarea');
   const editorTitle = $('#editorTitle');
 
+  // ---------- 阅读位置 → 编辑位置 同步 ----------
+
+  // 归一化标题文本；source 为 true 时额外剥离 Markdown 行内标记，
+  // 以便与渲染后的标题纯文本进行比较
+  function normalizeHeadingText(s, source) {
+    let t = String(s || '');
+    if (source) {
+      t = t.replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1'); // 链接/图片保留可见文字
+      t = t.replace(/[*_`~]/g, '');
+    }
+    return t.replace(/\s+/g, ' ').trim();
+  }
+
+  // 解析 Markdown 源码中的 ATX 标题，返回 { offset, text } 列表（offset 为字符偏移）
+  function collectMarkdownHeadings(md) {
+    const result = [];
+    const lines = String(md).split('\n');
+    let offset = 0;
+    let inFence = false;
+    let fenceMark = '';
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const fence = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
+      if (fence) {
+        // 跟踪围栏代码块，避免把代码块内的 # 注释误判为标题
+        if (!inFence) { inFence = true; fenceMark = fence[1][0]; }
+        else if (fence[1][0] === fenceMark) { inFence = false; fenceMark = ''; }
+      } else if (!inFence) {
+        const atx = /^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$/.exec(line);
+        if (atx) result.push({ offset, text: normalizeHeadingText(atx[2], true) });
+      }
+      offset += line.length + 1;
+    }
+    return result;
+  }
+
+  // 取当前阅读视图顶部所在的标题（与 scroll spy 判定方式一致）
+  function getTopVisibleHeading() {
+    const main = $('#main');
+    if (!main) return null;
+    const headings = $$('#content h1, #content h2, #content h3, #content h4, #content h5, #content h6');
+    if (!headings.length) return null;
+    const offset = 80;
+    let index = -1;
+    for (let i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop - offset <= main.scrollTop) index = i;
+      else break;
+    }
+    if (index < 0) return null; // 视口仍在第一个标题之前，回到开头即可
+    // 取标题纯文本（剔除锚点链接插入的 # 号）
+    const clone = headings[index].cloneNode(true);
+    clone.querySelectorAll('.anchor').forEach(a => a.remove());
+    return { index, text: normalizeHeadingText(clone.textContent, false) };
+  }
+
+  // 把阅读视图当前位置换算成编辑框中的字符偏移
+  function locateMarkdownOffset(md) {
+    const visible = getTopVisibleHeading();
+    if (!visible) return 0;
+    const sourceHeadings = collectMarkdownHeadings(md);
+    if (!sourceHeadings.length) return 0;
+    // 优先按标题文本匹配；同名标题取离渲染顺序最近的一个，避免跳到更早的同名标题
+    let best = -1;
+    let bestDist = Infinity;
+    sourceHeadings.forEach((h, i) => {
+      if (h.text !== visible.text) return;
+      const d = Math.abs(i - visible.index);
+      if (d < bestDist) { bestDist = d; best = i; }
+    });
+    if (best >= 0) return sourceHeadings[best].offset;
+    // 退化：按顺序索引对应
+    const idx = Math.min(visible.index, sourceHeadings.length - 1);
+    return sourceHeadings[idx] ? sourceHeadings[idx].offset : 0;
+  }
+
+  // 将 textarea 滚动到指定字符偏移处。textarea 无法按行号或字符位置设置 scrollTop，
+  // 因此构造一个与 textarea 同宽同字体的隐藏镜像元素来测量像素高度
+  function scrollTextareaToOffset(ta, offset) {
+    const cs = getComputedStyle(ta);
+    const mirror = document.createElement('div');
+    mirror.style.position = 'absolute';
+    mirror.style.top = '0';
+    mirror.style.left = '-99999px';
+    mirror.style.visibility = 'hidden';
+    mirror.style.boxSizing = 'border-box';
+    mirror.style.width = ta.clientWidth + 'px';
+    mirror.style.paddingTop = cs.paddingTop;
+    mirror.style.paddingRight = cs.paddingRight;
+    mirror.style.paddingBottom = cs.paddingBottom;
+    mirror.style.paddingLeft = cs.paddingLeft;
+    mirror.style.fontFamily = cs.fontFamily;
+    mirror.style.fontSize = cs.fontSize;
+    mirror.style.fontWeight = cs.fontWeight;
+    mirror.style.fontStyle = cs.fontStyle;
+    mirror.style.lineHeight = cs.lineHeight;
+    mirror.style.letterSpacing = cs.letterSpacing;
+    mirror.style.whiteSpace = 'pre-wrap';
+    mirror.style.wordBreak = 'break-word';
+    mirror.style.tabSize = cs.tabSize;
+    const marker = document.createElement('span');
+    mirror.appendChild(document.createTextNode(ta.value.slice(0, offset)));
+    mirror.appendChild(marker);
+    mirror.appendChild(document.createTextNode(ta.value.slice(offset)));
+    document.body.appendChild(mirror);
+    const top = marker.offsetTop;
+    document.body.removeChild(mirror);
+    ta.scrollTop = Math.max(0, top);
+  }
+
   function openEditor() {
     if (!lastMarkdown) {
       // 没有内容时直接以空白文档启动编辑器
@@ -1462,12 +1571,13 @@
     }
     editorTextarea.value = lastMarkdown;
     editorTitle.textContent = currentFileName ? ('编辑：' + currentFileName) : '编辑文档';
+    // 进入编辑前记录阅读视图位置，编辑框定位到同一处，保持阅读与编辑的连续性
+    const caretOffset = locateMarkdownOffset(lastMarkdown);
     editorOverlay.classList.add('show');
-    // 光标置于开头
     setTimeout(() => {
       editorTextarea.focus();
-      editorTextarea.setSelectionRange(0, 0);
-      editorTextarea.scrollTop = 0;
+      editorTextarea.setSelectionRange(caretOffset, caretOffset);
+      scrollTextareaToOffset(editorTextarea, caretOffset);
     }, 0);
   }
 
