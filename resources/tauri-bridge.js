@@ -105,6 +105,32 @@
       }
     },
 
+    // 保存二进制文件（Word 导出），base64 字符串写入磁盘
+    async saveBinary(filename, base64) {
+      try {
+        const dialog = window.__TAURI__ && window.__TAURI__.dialog;
+        const current = currentFilePath;
+        const dir = current ? current.replace(/[\\\/][^\\\/]*$/, '') : '';
+        const sep = (current && current.indexOf('\\') >= 0) ? '\\' : '/';
+        const defaultPath = dir ? dir + sep + filename : filename;
+        let target = defaultPath;
+        if (dialog && dialog.save) {
+          target = await dialog.save({
+            title: '导出 Word 文档',
+            defaultPath: defaultPath,
+            filters: [{ name: 'Word 文档', extensions: ['docx'] }],
+          });
+        }
+        if (!target) return false;
+        await invoke('write_binary_file', { path: target, dataBase64: base64 });
+        return true;
+      } catch (e) {
+        console.error('saveBinary failed:', e);
+        alert('导出文件失败: ' + e);
+        return false;
+      }
+    },
+
     // 获取最近文件列表
     async getRecentFiles() {
       try { return await invoke('get_recent_files'); }

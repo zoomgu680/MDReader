@@ -21,7 +21,8 @@
 - **文件关联**：双击 .md 文件可直接打开
 - **拖放打开**：支持拖放 .md 文件到窗口
 - **打印输出**：通过 iframe 隔离打印，避免 URL 页眉页脚
-- **导出 HTML**：单文件导出，样式内嵌
+- **导出 HTML**：单文件导出，样式内嵌，浏览器打开即可全文滚动阅读
+- **导出 Word**：按党政机关公文格式导出（A4 版心、仿宋三号正文、固定行距 28 磅、页码居中），支持标题层级字体、表格、图片与 Mermaid 图形；顶栏与设置面板均提供入口
 
 ## 技术栈
 
@@ -34,6 +35,7 @@
 | 代码高亮 | highlight.js v11 |
 | 数学公式 | KaTeX |
 | 图形渲染 | Mermaid v11 |
+| Word 导出 | docx v8.5.0 |
 | 后端依赖 | serde, dirs, base64 |
 
 第三方组件版权信息详见 [THIRD_PARTY_LICENSES](./THIRD_PARTY_LICENSES)。
@@ -55,6 +57,7 @@ MDReader/
 │   ├── katex.min.css
 │   ├── auto-render.min.js
 │   ├── mermaid.min.js
+│   ├── docx.min.js         # Word 导出（公文格式）
 │   ├── tauri-bridge.js      # Tauri 前后端桥接
 │   └── hljs-themes/         # 代码高亮主题
 ├── src-tauri/              # Rust 后端
@@ -128,8 +131,8 @@ cargo tauri build --bundles nsis
 切换配置后重新执行 `cargo tauri build --bundles nsis` 即可生成对应版本，建议重命名：
 
 ```
-MDReader_0.1.0_x64-offline_setup.exe
-MDReader_0.1.0_x64-online_setup.exe
+MDReader_0.2.1_x64-offline_setup.exe
+MDReader_0.2.1_x64-online_setup.exe
 ```
 
 ### 5. 重新生成应用图标
@@ -147,6 +150,15 @@ cargo tauri icon ./src-tauri/icons/icon.png
 - **NSIS vs WiX**：NSIS 生成 `*-setup.exe`，无需 WiX 工具；WiX 生成 `.msi`，需下载 WiX 工具集（可能因 TLS 问题失败，推荐用 `--bundles nsis` 跳过）
 - **跨平台构建**：macOS 包需在 macOS 环境构建，Windows 包需在 Windows 环境构建，无法交叉编译
 - **首次构建**：Rust 编译依赖较多，首次约需 5-10 分钟，后续增量构建很快
+
+## 更新日志
+
+### 0.2.1
+
+- 新增 **Word 文档导出**（党政机关公文格式）：A4 版心（上 37 / 下 35 / 左 28 / 右 26 mm）、正文仿宋三号、首行缩进两字符、固定行距 28 磅、页码居中；一级标题方正小标宋小二加粗居中且不缩进，二/三/四级标题分别为黑体/楷体/仿宋加粗；表格、图片、Mermaid 图形与代码块按公文样式转换
+- 新增顶栏「导出 Word」按钮，与设置面板中的导出入口功能一致
+- 修复设置面板导出的 HTML 文件无法滚动的问题（导出时覆盖应用内的固定视口样式）
+- 更新第三方许可证清单，新增 docx v8.5.0（MIT）
 
 ## 许可证
 

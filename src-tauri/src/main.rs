@@ -40,6 +40,80 @@ fn read_binary_file(path: String) -> Result<String, String> {
     Ok(general_purpose::STANDARD.encode(&bytes))
 }
 
+// 写入二进制文件（Word 导出），入参为 base64 编码
+#[tauri::command]
+fn write_binary_file(path: String, data_base64: String) -> Result<(), String> {
+    use base64::{engine::general_purpose, Engine};
+    let bytes = general_purpose::STANDARD
+        .decode(&data_base64)
+        .map_err(|e| format!("解码失败: {}", e))?;
+    fs::write(&path, bytes).map_err(|e| format!("写入文件失败: {}", e))
+}
+
+// 文件综合信息：大小、创建/修改时间、所有者（创建人）
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct FileInfo {
+    size: u64,
+    created_ms: Option<u64>,
+    modified_ms: Option<u64>,
+    owner: Option<String>,
+}
+
+fn system_time_ms(t: std::time::SystemTime) -> Option<u64> {
+    t.duration_since(std::time::UNIX_EPOCH)
+        .ok()
+        .map(|d| d.as_millis() as u64)
+}
+
+#[tauri::command]
+fn get_file_info(path: String) -> Result<FileInfo, String> {
+    let meta = fs::metadata(&path).map_err(|e| format!("读取文件信息失败: {}", e))?;
+    Ok(FileInfo {
+        size: meta.len(),
+        created_ms: meta.created().ok().and_then(system_time_ms),
+        modified_ms: meta.modified().ok().and_then(system_time_ms),
+        owner: file_owner(&path),
+    })
+}
+
+// 文件所有者（Windows 通过 ACL 查询，Unix 通过 stat 查询）
+#[cfg(target_os = "windows")]
+fn file_owner(path: &str) -> Option<String> {
+    let escaped = path.replace('\'', "''");
+    let script = format!(
+        "$ErrorActionPreference='SilentlyContinue'; \
+         [Console]::OutputEncoding=[System.Text.Encoding]::UTF8; \
+         $acl = Get-Acl -LiteralPath '{}'; if ($acl) {{ $acl.Owner }}",
+        escaped
+    );
+    let output = std::process::Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", script.as_str()])
+        .output()
+        .ok()?;
+    let text = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if text.is_empty() { None } else { Some(text) }
+}
+
+#[cfg(target_os = "macos")]
+fn file_owner(path: &str) -> Option<String> {
+    let output = std::process::Command::new("stat").args(["-f", "%Su", path]).output().ok()?;
+    let text = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if text.is_empty() { None } else { Some(text) }
+}
+
+#[cfg(all(unix, not(target_os = "macos")))]
+fn file_owner(path: &str) -> Option<String> {
+    let output = std::process::Command::new("stat").args(["-c", "%U", path]).output().ok()?;
+    let text = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if text.is_empty() { None } else { Some(text) }
+}
+
+#[cfg(not(any(windows, unix)))]
+fn file_owner(_path: &str) -> Option<String> {
+    None
+}
+
 // 获取最近打开的文件列表
 #[tauri::command]
 fn get_recent_files() -> Vec<String> {
@@ -96,6 +170,8 @@ fn main() {
             read_file,
             write_file,
             read_binary_file,
+            write_binary_file,
+            get_file_info,
             get_recent_files,
             add_recent_file,
             get_last_file,

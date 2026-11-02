@@ -37,8 +37,17 @@
   <button class="btn icon" id="btnFontSize" title="字体大小">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
   </button>
+  <button class="btn icon" id="btnMdHelp" title="Markdown 语法帮助">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+  </button>
+  <button class="btn icon" id="btnDocInfo" title="文档综合信息" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+  </button>
   <button class="btn icon" id="btnSettings" title="设置">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
+  <button class="btn icon" id="btnExportDocxTop" title="导出 Word 文档">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
   </button>
   <button class="btn icon" id="btnPrint" title="打印 / 导出 PDF (Ctrl+P)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -171,6 +180,7 @@
   <div class="drawer-footer">
     <button class="btn outline" id="btnAbout">关于</button>
     <button class="btn outline" id="btnReset">重置默认</button>
+    <button class="btn outline" id="btnExportDocx">导出 Word</button>
     <button class="btn primary" id="btnExport">导出 HTML</button>
   </div>
 </aside>
@@ -229,6 +239,12 @@
           <a href="https://github.com/mermaid-js/mermaid" target="_blank">github.com/mermaid-js/mermaid</a>
         </div>
         <div class="license-item">
+          <strong>docx v8.5.0</strong>
+          <span>MIT License</span>
+          <small>Copyright (c) 2016 Dolan</small>
+          <a href="https://github.com/dolanmiu/docx" target="_blank">github.com/dolanmiu/docx</a>
+        </div>
+        <div class="license-item">
           <strong>Tauri</strong>
           <span>Apache License 2.0</span>
           <small>Copyright (c) Tauri Programme within The Commons Conservancy</small>
@@ -254,6 +270,162 @@
         </div>
       </div>
       <p class="about-footer-text">以上所有组件均为开源软件，遵循其各自许可证条款使用。</p>
+    </div>
+  </div>
+</div>
+
+<!-- Markdown 语法帮助弹窗 -->
+<div class="about-overlay" id="helpOverlay">
+  <div class="about-modal help-modal">
+    <div class="about-header">
+      <h2>Markdown 语法帮助</h2>
+      <button class="btn icon" id="btnCloseHelp" title="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="about-body help-body">
+      <p class="help-intro">以下是本阅读器支持的 Markdown 语法。左列为书写方式，右列为说明。</p>
+
+      <div class="help-group">
+        <h4>标题</h4>
+        <table class="help-table">
+          <tr><td><code># 一级标题</code></td><td>文章主标题</td></tr>
+          <tr><td><code>## 二级标题</code></td><td>章节标题</td></tr>
+          <tr><td><code>### 三级标题</code></td><td>小节标题</td></tr>
+          <tr><td><code>#### 四级标题</code></td><td>更细一级的标题</td></tr>
+          <tr><td><code>##### 五级标题</code></td><td>五级标题（导出 Word 时按正文处理）</td></tr>
+          <tr><td><code>###### 六级标题</code></td><td>六级标题（导出 Word 时按正文处理）</td></tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>文字样式</h4>
+        <table class="help-table">
+          <tr><td><code>**加粗文字**</code></td><td>加粗显示</td></tr>
+          <tr><td><code>*斜体文字*</code></td><td>斜体显示</td></tr>
+          <tr><td><code>***粗斜体***</code></td><td>同时加粗与斜体</td></tr>
+          <tr><td><code>~~删除文字~~</code></td><td>删除线</td></tr>
+          <tr><td><code>`行内代码`</code></td><td>等宽字体显示代码</td></tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>段落与换行</h4>
+        <table class="help-table">
+          <tr><td><code>空一行</code></td><td>分隔上下两个段落</td></tr>
+          <tr><td><code>行尾两个空格 + 回车</code></td><td>段落内强制换行</td></tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>列表</h4>
+        <table class="help-table">
+          <tr><td><code>- 项目一</code></td><td>无序列表（也可用 <code>*</code> 或 <code>+</code>）</td></tr>
+          <tr><td><code>1. 项目一</code></td><td>有序列表，序号自动重排</td></tr>
+          <tr><td><code>- [ ] 待办事项</code></td><td>未完成的任务项</td></tr>
+          <tr><td><code>- [x] 已完成事项</code></td><td>已完成的任务项</td></tr>
+          <tr><td><code>缩进两个空格</code></td><td>生成嵌套的子列表</td></tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>引用</h4>
+        <table class="help-table">
+          <tr><td><code>&gt; 引用的内容</code></td><td>块引用，可跨行书写</td></tr>
+          <tr><td><code>&gt;&gt; 二级引用</code></td><td>引用的嵌套</td></tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>代码块</h4>
+        <table class="help-table">
+          <tr>
+            <td><pre><code>```javascript
+function hello() {
+  console.log('Hello');
+}
+```</code></pre></td>
+            <td>用三个反引号包裹，首行反引号后写语言名可获得语法高亮。支持 JavaScript、Python、Rust、HTML、CSS、SQL 等 190 多种语言</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>表格</h4>
+        <table class="help-table">
+          <tr>
+            <td><pre><code>| 列名 1 | 列名 2 |
+| --- | --- |
+| 内容 A | 内容 B |</code></pre></td>
+            <td>第二行是分隔行，必须有。用 <code>:---</code> 左对齐、<code>:---:</code> 居中、<code>---:</code> 右对齐</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>链接与图片</h4>
+        <table class="help-table">
+          <tr><td><code>[链接文字](https://example.com)</code></td><td>超链接</td></tr>
+          <tr><td><code>![图片说明](图片.png)</code></td><td>插入图片，支持与文档同目录的相对路径</td></tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>分割线</h4>
+        <table class="help-table">
+          <tr><td><code>---</code></td><td>一条水平分隔线</td></tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>数学公式</h4>
+        <table class="help-table">
+          <tr><td><code>$E = mc^2$</code></td><td>行内公式</td></tr>
+          <tr>
+            <td><pre><code>$$
+\int_0^1 x^2 dx
+$$</code></pre></td>
+            <td>独立成行的块级公式</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>Mermaid 图表</h4>
+        <table class="help-table">
+          <tr>
+            <td><pre><code>```mermaid
+graph LR
+  A[开始] --&gt; B[结束]
+```</code></pre></td>
+            <td>支持流程图、时序图、甘特图、类图等。点击图表可全屏查看</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="help-group">
+        <h4>内联 HTML 与转义</h4>
+        <table class="help-table">
+          <tr><td><code>&lt;span style="color:red"&gt;红色文字&lt;/span&gt;</code></td><td>直接书写 HTML 标签</td></tr>
+          <tr><td><code>\* 不是斜体 \*</code></td><td>用反斜杠转义特殊字符</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 文档综合信息弹窗 -->
+<div class="about-overlay" id="infoOverlay">
+  <div class="about-modal info-modal">
+    <div class="about-header">
+      <h2>文档综合信息</h2>
+      <button class="btn icon" id="btnCloseInfo" title="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="about-body">
+      <table class="info-table" id="infoTable"></table>
+      <p class="info-note">统计基于当前打开的文档。文件大小、时间与所有者信息来自本地文件系统。</p>
     </div>
   </div>
 </div>
@@ -295,6 +467,7 @@
 <script src="resources/katex.min.js"></script>
 <script src="resources/auto-render.min.js"></script>
 <script src="resources/mermaid.min.js"></script>
+<script src="resources/docx.min.js"></script>
 <script src="resources/tauri-bridge.js"></script>
 <script>
   // Mermaid UMD 加载后挂载到 window.mermaid，这里初始化配置
@@ -1005,6 +1178,7 @@
   // ---------- 渲染入口 ----------
   async function renderMarkdown(md) {
     lastMarkdown = md;
+    updateDocInfoButton();
     const content = $('#content');
     try {
       let html = marked.parse(preprocessMarkdown(md), { breaks: settings.breaks, gfm: settings.gfm });
@@ -1124,8 +1298,10 @@
     }
     // 内联 KaTeX 样式（含 woff2 字体 data URI），使导出 HTML 无需联网
     const katexCss = await getKatexInlineCss();
+    // 应用样式为固定视口布局（body overflow:hidden），导出文件需恢复页面滚动
+    const scrollFixCss = 'html, body { height: auto !important; min-height: 100%; overflow: auto !important; }';
     const full = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + (currentFileName||'document') + '</title>' +
-      '<style>' + katexCss + '\n' + css + '</style></head><body><div class="content">' + html + '</div></body></html>';
+      '<style>' + katexCss + '\n' + css + '\n' + scrollFixCss + '</style></head><body><div class="content">' + html + '</div></body></html>';
     const blob = new Blob([full], { type: 'text/html;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1133,6 +1309,601 @@
     a.click();
     URL.revokeObjectURL(a.href);
     toast('已导出 HTML');
+  }
+
+  // ---------- 导出 Word（公文格式） ----------
+  // 版面：A4，上 37mm / 下 35mm / 左 28mm / 右 26mm，行距固定 28 磅
+  const DOCX_MM = { width: 210, height: 297, top: 37, bottom: 35, left: 28, right: 26 };
+  const DOCX_FONTS = {
+    body:  { ascii: 'FangSong', eastAsia: '仿宋', hAnsi: 'FangSong' },
+    h1:    { ascii: 'FZXiaoBiaoSong-B05S', eastAsia: '方正小标宋简体', hAnsi: 'FZXiaoBiaoSong-B05S' },
+    h2:    { ascii: 'SimHei', eastAsia: '黑体', hAnsi: 'SimHei' },
+    h3:    { ascii: 'KaiTi', eastAsia: '楷体', hAnsi: 'KaiTi' },
+    table: { ascii: 'SimSun', eastAsia: '宋体', hAnsi: 'SimSun' },
+    mono:  { ascii: 'Consolas', eastAsia: 'Consolas', hAnsi: 'Consolas' },
+  };
+  // 字号使用半磅值：三号 16pt / 小二号 18pt / 五号 10.5pt / 小四 12pt
+  const DOCX_SIZE = { body: 32, h1: 36, table: 21, mono: 21, footer: 24 };
+  const DOCX_LINE_TWIP = 560;   // 固定行距 28 磅 = 560 twips
+  const DOCX_INDENT_TWIP = 640; // 首行缩进 2 个 16pt 字符 = 640 twips
+
+  function docxMmToTwip(mm) { return Math.floor(mm / 25.4 * 72 * 20); }
+  function docxMmToPx(mm) { return mm / 25.4 * 96; }
+  function docxBodyBase() { return { font: DOCX_FONTS.body, size: DOCX_SIZE.body }; }
+
+  function stripHtmlTags(text) {
+    return String(text || '').replace(/<[^>]*>/g, '');
+  }
+
+  // 行内标记 → docx TextRun 列表
+  function inlineToDocxRuns(tokens, base, D) {
+    const runs = [];
+    const font = base.font || DOCX_FONTS.body;
+    const size = base.size || DOCX_SIZE.body;
+    const baseState = { bold: !!base.bold, italics: !!base.italics, strike: !!base.strike };
+
+    function pushText(text, st) {
+      if (text == null || text === '') return;
+      runs.push(new D.TextRun({
+        text: String(text),
+        font: font,
+        size: size,
+        bold: !!st.bold,
+        italics: !!st.italics,
+        strike: !!st.strike,
+      }));
+    }
+
+    function walk(list, st) {
+      for (const t of list || []) {
+        switch (t.type) {
+          case 'text':
+          case 'escape':
+            pushText(t.text, st);
+            break;
+          case 'codespan':
+            runs.push(new D.TextRun({
+              text: t.text || '',
+              font: DOCX_FONTS.mono,
+              size: size,
+              bold: !!st.bold,
+              italics: !!st.italics,
+              strike: !!st.strike,
+              shading: { fill: 'F0F0F0' },
+            }));
+            break;
+          case 'strong':
+            walk(t.tokens, { bold: true, italics: st.italics, strike: st.strike });
+            break;
+          case 'em':
+            walk(t.tokens, { bold: st.bold, italics: true, strike: st.strike });
+            break;
+          case 'del':
+            walk(t.tokens, { bold: st.bold, italics: st.italics, strike: true });
+            break;
+          case 'link': {
+            const linkRuns = [];
+            const collect = (lst, st2) => {
+              for (const c of lst || []) {
+                const mk = (text, extra) => {
+                  if (!text) return;
+                  linkRuns.push(new D.TextRun(Object.assign({
+                    text: String(text),
+                    font: font,
+                    size: size,
+                    bold: !!st2.bold,
+                    italics: !!st2.italics,
+                    strike: !!st2.strike,
+                    color: '0563C1',
+                    underline: {},
+                  }, extra || {})));
+                };
+                if (c.type === 'text' || c.type === 'escape') mk(c.text);
+                else if (c.type === 'codespan') mk(c.text, { font: DOCX_FONTS.mono, shading: { fill: 'F0F0F0' } });
+                else if (c.type === 'strong') collect(c.tokens, { bold: true, italics: st2.italics, strike: st2.strike });
+                else if (c.type === 'em') collect(c.tokens, { bold: st2.bold, italics: true, strike: st2.strike });
+                else if (c.type === 'del') collect(c.tokens, { bold: st2.bold, italics: st2.italics, strike: true });
+                else if (c.tokens) collect(c.tokens, st2);
+                else mk(c.text);
+              }
+            };
+            collect(t.tokens, st);
+            if (t.href && linkRuns.length) {
+              runs.push(new D.ExternalHyperlink({ link: t.href, children: linkRuns }));
+            } else {
+              runs.push.apply(runs, linkRuns);
+            }
+            break;
+          }
+          case 'br':
+            runs.push(new D.TextRun({ break: 1 }));
+            break;
+          case 'image':
+            pushText('[' + (t.text || '图片') + ']', st);
+            break;
+          case 'html':
+            pushText(stripHtmlTags(t.text), st);
+            break;
+          default:
+            if (t.tokens) walk(t.tokens, st);
+            else if (t.text) pushText(t.text, st);
+        }
+      }
+    }
+
+    walk(tokens, baseState);
+    return runs;
+  }
+
+  // 正文段落：仿宋三号、首行缩进两字符、两端对齐、固定行距 28 磅
+  function docxParagraph(children, opts, D) {
+    return new D.Paragraph(Object.assign({
+      spacing: { before: 0, after: 0, line: DOCX_LINE_TWIP, lineRule: D.LineRuleType.EXACT },
+      indent: { firstLine: DOCX_INDENT_TWIP },
+      alignment: D.AlignmentType.JUSTIFIED,
+      children: children,
+    }, opts || {}));
+  }
+
+  // 标题：一级小标宋小二居中（无缩进），二级黑体、三级楷体、四级仿宋，五级起按正文
+  function docxHeading(token, D) {
+    const depth = token.depth;
+    if (depth === 1) {
+      return docxParagraph(
+        inlineToDocxRuns(token.tokens, { font: DOCX_FONTS.h1, size: DOCX_SIZE.h1, bold: true }, D),
+        { alignment: D.AlignmentType.CENTER, indent: { firstLine: 0 } },
+        D
+      );
+    }
+    if (depth === 2) {
+      return docxParagraph(
+        inlineToDocxRuns(token.tokens, { font: DOCX_FONTS.h2, size: DOCX_SIZE.body, bold: true }, D), {}, D
+      );
+    }
+    if (depth === 3) {
+      return docxParagraph(
+        inlineToDocxRuns(token.tokens, { font: DOCX_FONTS.h3, size: DOCX_SIZE.body, bold: true }, D), {}, D
+      );
+    }
+    if (depth === 4) {
+      return docxParagraph(
+        inlineToDocxRuns(token.tokens, { font: DOCX_FONTS.body, size: DOCX_SIZE.body, bold: true }, D), {}, D
+      );
+    }
+    // 五级、六级标题按正文处理
+    return docxParagraph(inlineToDocxRuns(token.tokens, docxBodyBase(), D), {}, D);
+  }
+
+  // 表格：宋体五号、标题行加粗、无缩进
+  function docxTableCell(cellToken, isHeader, widthTwip, D) {
+    const tokens = (cellToken && cellToken.tokens) || [{ type: 'text', text: (cellToken && cellToken.text) || '' }];
+    return new D.TableCell({
+      width: { size: widthTwip, type: D.WidthType.DXA },
+      margins: { top: 30, bottom: 30, left: 80, right: 80 },
+      children: [new D.Paragraph({
+        spacing: { before: 0, after: 0, line: 240, lineRule: D.LineRuleType.AUTO },
+        indent: { firstLine: 0, left: 0, right: 0 },
+        alignment: isHeader ? D.AlignmentType.CENTER : D.AlignmentType.LEFT,
+        children: inlineToDocxRuns(tokens, { font: DOCX_FONTS.table, size: DOCX_SIZE.table, bold: isHeader }, D),
+      })],
+    });
+  }
+
+  function docxTable(token, D) {
+    const totalTwip = docxMmToTwip(DOCX_MM.width - DOCX_MM.left - DOCX_MM.right);
+    const colCount = Math.max(1, (token.header || []).length);
+    const colWidth = Math.floor(totalTwip / colCount);
+    const rows = [
+      new D.TableRow({
+        tableHeader: true,
+        children: (token.header || []).map(c => docxTableCell(c, true, colWidth, D)),
+      }),
+    ];
+    for (const row of token.rows || []) {
+      rows.push(new D.TableRow({
+        children: row.map(c => docxTableCell(c, false, colWidth, D)),
+      }));
+    }
+    return new D.Table({
+      width: { size: totalTwip, type: D.WidthType.DXA },
+      columnWidths: new Array(colCount).fill(colWidth),
+      layout: D.TableLayoutType.FIXED,
+      rows: rows,
+    });
+  }
+
+  function loadImageElement(src) {
+    return new Promise(function (resolve, reject) {
+      const img = new Image();
+      img.onload = function () { resolve(img); };
+      img.onerror = function () { reject(new Error('图片无法解码')); };
+      img.src = src;
+    });
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      const reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = function () { reject(reader.error); };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  // 把 Markdown 中的图片地址转成可解码的 data URL（本地相对路径经 Tauri 读取）
+  async function imageSrcToDataUrl(src) {
+    if (!src) return null;
+    if (/^(data:|blob:)/i.test(src)) return src;
+    if (/^https?:/i.test(src)) return src;
+    const baseDir = getBaseDir();
+    if (!baseDir) return src;
+    const resolved = joinPath(baseDir, src);
+    const invoke = window.__TAURI__ && window.__TAURI__.invoke;
+    if (invoke) {
+      const b64 = await invoke('read_binary_file', { path: resolved });
+      const ext = (src.split('.').pop() || '').toLowerCase();
+      return 'data:' + extToMime(ext) + ';base64,' + b64;
+    }
+    return toAccessibleUrl(resolved);
+  }
+
+  // 读取图片并统一转成 PNG，同时返回原始像素尺寸（用于版面缩放）
+  async function loadDocxImage(src, ctx) {
+    if (!src) return null;
+    if (ctx.imageCache.has(src)) return ctx.imageCache.get(src);
+    const task = (async function () {
+      try {
+        let url = await imageSrcToDataUrl(src);
+        if (/^https?:/i.test(url)) {
+          const resp = await fetch(url, { mode: 'cors' });
+          url = await blobToDataUrl(await resp.blob());
+        }
+        const img = await loadImageElement(url);
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        if (!w || !h) return null;
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const g = canvas.getContext('2d');
+        g.fillStyle = '#ffffff';
+        g.fillRect(0, 0, w, h);
+        g.drawImage(img, 0, 0, w, h);
+        return { dataUrl: canvas.toDataURL('image/png'), width: w, height: h };
+      } catch (e) {
+        console.warn('Word 导出：图片处理失败，已跳过', src, e);
+        return null;
+      }
+    })();
+    ctx.imageCache.set(src, task);
+    return task;
+  }
+
+  // 图形尺寸：超宽等比缩至页面宽度；超页高等比缩至页面高度
+  function fitDocxImage(w, h, ctx) {
+    let scale = 1;
+    if (w > ctx.maxWidthPx) scale = ctx.maxWidthPx / w;
+    if (h * scale > ctx.maxHeightPx) scale = Math.min(scale, ctx.maxHeightPx / h);
+    return {
+      width: Math.max(1, Math.round(w * scale)),
+      height: Math.max(1, Math.round(h * scale)),
+    };
+  }
+
+  function docxImageParagraph(img, ctx) {
+    const D = window.docx;
+    const fit = fitDocxImage(img.width, img.height, ctx);
+    return new D.Paragraph({
+      alignment: D.AlignmentType.CENTER,
+      // 图片段落不能用固定行距，否则图片会被行高裁切
+      spacing: { before: 0, after: 0, line: 240, lineRule: D.LineRuleType.AUTO },
+      indent: { firstLine: 0 },
+      children: [new D.ImageRun({
+        data: img.dataUrl,
+        transformation: { width: fit.width, height: fit.height },
+      })],
+    });
+  }
+
+  function docxImageFallbackParagraph(alt, D) {
+    return docxParagraph([new D.TextRun({
+      text: '[' + (alt || '图片') + ']',
+      font: DOCX_FONTS.body,
+      size: DOCX_SIZE.body,
+    })], {}, D);
+  }
+
+  async function docxParagraphBlocks(token, ctx) {
+    const D = window.docx;
+    const parts = (token.tokens || []).filter(t => !(t.type === 'text' && !String(t.text || '').trim()));
+    if (parts.length && parts.every(t => t.type === 'image')) {
+      const out = [];
+      for (const img of parts) {
+        const loaded = await loadDocxImage(img.href, ctx);
+        out.push(loaded ? docxImageParagraph(loaded, ctx) : docxImageFallbackParagraph(img.text, D));
+      }
+      return out;
+    }
+    return [docxParagraph(inlineToDocxRuns(token.tokens || [], docxBodyBase(), D), {}, D)];
+  }
+
+  // 将页面上的 Mermaid SVG 光栅化为 PNG
+  async function svgElementToPng(svg) {
+    try {
+      const rect = svg.getBoundingClientRect();
+      let w = rect.width;
+      let h = rect.height;
+      if (!w || !h) {
+        const vb = (svg.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+        if (vb.length === 4 && vb[2] && vb[3]) { w = vb[2]; h = vb[3]; }
+      }
+      if (!w || !h) return null;
+      const clone = svg.cloneNode(true);
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      clone.setAttribute('width', w);
+      clone.setAttribute('height', h);
+      const svgString = new XMLSerializer().serializeToString(clone);
+      const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+      const img = await loadImageElement(url);
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
+      const g = canvas.getContext('2d');
+      g.fillStyle = '#ffffff';
+      g.fillRect(0, 0, canvas.width, canvas.height);
+      g.drawImage(img, 0, 0, canvas.width, canvas.height);
+      return { dataUrl: canvas.toDataURL('image/png'), width: w, height: h };
+    } catch (e) {
+      console.warn('Word 导出：Mermaid 图形转换失败', e);
+      return null;
+    }
+  }
+
+  async function docxCodeBlock(token, ctx) {
+    const D = window.docx;
+    const lang = String(token.lang || '').trim().split(/\s+/)[0].toLowerCase();
+    if (lang === 'mermaid' && ctx.mermaidIndex < ctx.mermaidSvgs.length) {
+      const svg = ctx.mermaidSvgs[ctx.mermaidIndex++];
+      if (svg) {
+        const png = await svgElementToPng(svg);
+        if (png) return docxImageParagraph(png, ctx);
+      }
+    }
+    // 代码块：五号等宽字体 + 浅灰底纹 + 无缩进
+    // marked v12 的代码内容存放在 text 字段，兼容 code 字段
+    const codeText = token.code != null ? token.code : (token.text || '');
+    const lines = String(codeText).replace(/\n$/, '').split('\n');
+    const children = lines.map(function (line, i) {
+      const opts = {
+        text: line === '' ? ' ' : line,
+        font: DOCX_FONTS.mono,
+        size: DOCX_SIZE.mono,
+      };
+      if (i > 0) opts.break = 1;
+      return new D.TextRun(opts);
+    });
+    return new D.Paragraph({
+      spacing: { before: 120, after: 120, line: 240, lineRule: D.LineRuleType.AUTO },
+      indent: { firstLine: 0, left: 0, right: 0 },
+      shading: { fill: 'F5F5F5' },
+      children: children,
+    });
+  }
+
+  function docxHr(D) {
+    return new D.Paragraph({
+      spacing: { before: 120, after: 120, line: 120, lineRule: D.LineRuleType.EXACT },
+      indent: { firstLine: 0 },
+      border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: '999999', space: 1 } },
+      children: [new D.TextRun({ text: '' })],
+    });
+  }
+
+  function docxQuotedParagraph(children, D) {
+    return docxParagraph(children, {
+      border: { left: { style: D.BorderStyle.SINGLE, size: 12, color: 'BFBFBF', space: 8 } },
+    }, D);
+  }
+
+  async function docxBlockquote(token, ctx) {
+    const D = window.docx;
+    const out = [];
+    const walk = async function (tokens) {
+      for (const t of tokens || []) {
+        if (t.type === 'paragraph' || t.type === 'text') {
+          const inlineTokens = t.tokens || [{ type: 'text', text: t.text || '' }];
+          out.push(docxQuotedParagraph(inlineToDocxRuns(inlineTokens, docxBodyBase(), D), D));
+        } else if (t.type === 'list') {
+          out.push.apply(out, await docxList(t, ctx));
+        } else if (t.type === 'code') {
+          out.push(await docxCodeBlock(t, ctx));
+        } else if (t.type === 'heading') {
+          out.push(docxHeading(t, D));
+        } else if (t.type === 'blockquote') {
+          await walk(t.tokens);
+        }
+      }
+    };
+    await walk(token.tokens);
+    return out;
+  }
+
+  // 列表：按正文格式，前缀使用"点号"；有序列表保留原编号，任务列表用 ☐/☑
+  async function docxList(token, ctx) {
+    const D = window.docx;
+    const out = [];
+    const items = token.items || [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      let prefix;
+      if (item.task) prefix = (item.checked ? '☑ ' : '☐ ');
+      else if (token.ordered) prefix = (Number(token.start || 1) + i) + '. ';
+      else prefix = '· ';
+      let runs = [new D.TextRun({ text: prefix, font: DOCX_FONTS.body, size: DOCX_SIZE.body })];
+      let hasContent = false;
+      for (const t of item.tokens || []) {
+        if (t.type === 'list') {
+          if (runs.length) out.push(docxParagraph(runs, {}, D));
+          runs = [];
+          hasContent = false;
+          out.push.apply(out, await docxList(t, ctx));
+          continue;
+        }
+        if (t.type === 'code') {
+          if (runs.length) out.push(docxParagraph(runs, {}, D));
+          runs = [];
+          hasContent = false;
+          out.push(await docxCodeBlock(t, ctx));
+          continue;
+        }
+        const inlineTokens = t.tokens || (t.text ? [{ type: 'text', text: t.text }] : []);
+        const more = inlineToDocxRuns(inlineTokens, docxBodyBase(), D);
+        if (more.length) {
+          runs = runs.concat(more);
+          hasContent = true;
+        }
+      }
+      if (runs.length) out.push(docxParagraph(runs, {}, D));
+    }
+    return out;
+  }
+
+  // 内联 HTML 块：去掉标签后按行输出为正文段落
+  function docxHtmlBlocks(text) {
+    const D = window.docx;
+    return stripHtmlTags(text)
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean)
+      .map(l => docxParagraph([new D.TextRun({
+        text: l, font: DOCX_FONTS.body, size: DOCX_SIZE.body,
+      })], {}, D));
+  }
+
+  async function buildDocxChildren(md) {
+    const D = window.docx;
+    const tokens = marked.lexer(preprocessMarkdown(md), { gfm: settings.gfm });
+    const mermaidWrappers = $$('#content .mermaid');
+    const ctx = {
+      mermaidSvgs: mermaidWrappers.map(w => w.querySelector('svg')),
+      mermaidIndex: 0,
+      imageCache: new Map(),
+      maxWidthPx: docxMmToPx(DOCX_MM.width - DOCX_MM.left - DOCX_MM.right) - 8,
+      maxHeightPx: docxMmToPx(DOCX_MM.height - DOCX_MM.top - DOCX_MM.bottom) - 8,
+    };
+    const out = [];
+    for (const t of tokens) {
+      switch (t.type) {
+        case 'heading':
+          out.push(docxHeading(t, D));
+          break;
+        case 'paragraph':
+          out.push.apply(out, await docxParagraphBlocks(t, ctx));
+          break;
+        case 'text': {
+          const inlineTokens = t.tokens || [{ type: 'text', text: t.text || '' }];
+          out.push(docxParagraph(inlineToDocxRuns(inlineTokens, docxBodyBase(), D), {}, D));
+          break;
+        }
+        case 'list':
+          out.push.apply(out, await docxList(t, ctx));
+          break;
+        case 'table':
+          out.push(docxTable(t, D));
+          break;
+        case 'code':
+          out.push(await docxCodeBlock(t, ctx));
+          break;
+        case 'blockquote':
+          out.push.apply(out, await docxBlockquote(t, ctx));
+          break;
+        case 'hr':
+          out.push(docxHr(D));
+          break;
+        case 'html':
+          out.push.apply(out, docxHtmlBlocks(t.text));
+          break;
+        default:
+          break;
+      }
+    }
+    return out;
+  }
+
+  async function buildDocxDocument(md) {
+    const D = window.docx;
+    const children = await buildDocxChildren(md);
+    const footer = new D.Footer({
+      children: [new D.Paragraph({
+        alignment: D.AlignmentType.CENTER,
+        spacing: { before: 0, after: 0, line: 240, lineRule: D.LineRuleType.AUTO },
+        indent: { firstLine: 0 },
+        children: [new D.TextRun({
+          children: [D.PageNumber.CURRENT],
+          font: DOCX_FONTS.table,
+          size: DOCX_SIZE.footer,
+        })],
+      })],
+    });
+    return new D.Document({
+      styles: {
+        default: {
+          document: {
+            run: { font: DOCX_FONTS.body, size: DOCX_SIZE.body },
+            paragraph: {
+              spacing: { before: 0, after: 0, line: DOCX_LINE_TWIP, lineRule: D.LineRuleType.EXACT },
+              indent: { firstLine: DOCX_INDENT_TWIP },
+            },
+          },
+        },
+      },
+      sections: [{
+        properties: {
+          page: {
+            size: { width: docxMmToTwip(DOCX_MM.width), height: docxMmToTwip(DOCX_MM.height) },
+            margin: {
+              top: docxMmToTwip(DOCX_MM.top),
+              bottom: docxMmToTwip(DOCX_MM.bottom),
+              left: docxMmToTwip(DOCX_MM.left),
+              right: docxMmToTwip(DOCX_MM.right),
+            },
+          },
+        },
+        footers: { default: footer },
+        children: children,
+      }],
+    });
+  }
+
+  async function exportDocx() {
+    if (!lastMarkdown) { toast('没有可导出的内容'); return; }
+    if (!window.docx || !window.docx.Document) {
+      toast('Word 导出组件未加载');
+      return;
+    }
+    toast('正在生成 Word 文档…');
+    try {
+      const docxDoc = await buildDocxDocument(lastMarkdown);
+      const baseName = (currentFileName || 'document').replace(/\.(md|markdown|txt)$/i, '') + '.docx';
+      const bridge = window.__TAURI_BRIDGE__;
+      if (bridge && bridge.mode === 'tauri' && typeof bridge.saveBinary === 'function') {
+        const base64 = await window.docx.Packer.toBase64String(docxDoc);
+        const saved = await bridge.saveBinary(baseName, base64);
+        if (saved) toast('已导出 Word 文档');
+      } else {
+        const blob = await window.docx.Packer.toBlob(docxDoc);
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = baseName;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        toast('已导出 Word 文档');
+      }
+    } catch (e) {
+      console.error('导出 Word 失败:', e);
+      toast('导出 Word 失败: ' + (e && e.message ? e.message : e));
+    }
   }
 
   // ---------- 进度条 / 回到顶部 ----------
@@ -1277,6 +2048,8 @@
   $('#main').addEventListener('scroll', onMainScroll);
   $('#btnPrint').addEventListener('click', printViaIframe);
   $('#btnExport').addEventListener('click', exportHtml);
+  $('#btnExportDocx').addEventListener('click', exportDocx);
+  $('#btnExportDocxTop').addEventListener('click', exportDocx);
 
   // 关于弹窗
   $('#btnAbout').addEventListener('click', () => $('#aboutOverlay').classList.add('show'));
@@ -1284,6 +2057,130 @@
   $('#aboutOverlay').addEventListener('click', e => {
     if (e.target === $('#aboutOverlay')) $('#aboutOverlay').classList.remove('show');
   });
+
+  // Markdown 语法帮助弹窗
+  $('#btnMdHelp').addEventListener('click', () => $('#helpOverlay').classList.add('show'));
+  $('#btnCloseHelp').addEventListener('click', () => $('#helpOverlay').classList.remove('show'));
+  $('#helpOverlay').addEventListener('click', e => {
+    if (e.target === $('#helpOverlay')) $('#helpOverlay').classList.remove('show');
+  });
+
+  // ---------- 文档综合信息 ----------
+  $('#btnDocInfo').addEventListener('click', openDocInfo);
+  $('#btnCloseInfo').addEventListener('click', () => $('#infoOverlay').classList.remove('show'));
+  $('#infoOverlay').addEventListener('click', e => {
+    if (e.target === $('#infoOverlay')) $('#infoOverlay').classList.remove('show');
+  });
+
+  function formatFileSize(n) {
+    if (n == null) return '未知';
+    let text = Number(n).toLocaleString('zh-CN') + ' bytes';
+    if (n >= 1024) {
+      const units = ['KB', 'MB', 'GB', 'TB'];
+      let v = n / 1024, i = 0;
+      while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+      text += '（' + v.toFixed(2) + ' ' + units[i] + '）';
+    }
+    return text;
+  }
+
+  function formatTimestamp(ms) {
+    if (!ms) return '未知';
+    const d = new Date(ms);
+    const p = x => String(x).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+      ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  }
+
+  // 统计 Markdown 源码的结构信息（围栏代码块内的内容不计入标题、表格）
+  function countMarkdownStats(md) {
+    const lines = md.split('\n');
+    let inFence = false, fenceChar = '';
+    let tables = 0, codeBlocks = 0, mermaid = 0;
+    for (const line of lines) {
+      const fence = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
+      if (fence) {
+        if (!inFence) {
+          inFence = true;
+          fenceChar = fence[1][0];
+          codeBlocks++;
+          if (/^\s{0,3}(?:`{3,}|~{3,})\s*mermaid\b/i.test(line)) mermaid++;
+        } else if (fence[1][0] === fenceChar) {
+          inFence = false;
+          fenceChar = '';
+        }
+        continue;
+      }
+      // 表格分隔行必须含管道符，避免把分割线 --- 误计为表格
+      if (!inFence && line.includes('|') && /^\s*\|?\s*:?-{3,}[-:|\s]*$/.test(line)) tables++;
+    }
+    const allLinks = (md.match(/\[[^\]]*\]\([^)]*\)/g) || []).length;
+    const images = (md.match(/!\[[^\]]*\]\([^)]*\)/g) || []).length;
+    return {
+      chars: md.length,
+      charsNoSpace: md.replace(/\s/g, '').length,
+      lines: lines.length,
+      headings: collectMarkdownHeadings(md).length,
+      tables: tables,
+      codeBlocks: codeBlocks,
+      mermaid: mermaid,
+      images: images,
+      links: allLinks - images,
+    };
+  }
+
+  function renderInfoRows(size, createdMs, modifiedMs, owner, pending) {
+    const stats = countMarkdownStats(lastMarkdown);
+    const wait = '读取中…';
+    const rows = [
+      ['文件名', currentFileName || '未命名'],
+      ['完整路径', currentFilePath || '（未保存到磁盘）'],
+      ['文件大小', size == null ? (pending ? wait : '未知') : formatFileSize(size)],
+      ['字符数（含空白）', stats.chars.toLocaleString('zh-CN')],
+      ['字符数（不含空白）', stats.charsNoSpace.toLocaleString('zh-CN')],
+      ['总行数', stats.lines.toLocaleString('zh-CN')],
+      ['标题数量', String(stats.headings)],
+      ['表格数量', String(stats.tables)],
+      ['代码块数量', String(stats.codeBlocks)],
+      ['Mermaid 图表数量', String(stats.mermaid)],
+      ['图片数量', String(stats.images)],
+      ['链接数量', String(stats.links)],
+      ['创建时间', pending ? wait : formatTimestamp(createdMs)],
+      ['最后修改时间', pending ? wait : formatTimestamp(modifiedMs)],
+      ['文件所有者（创建人）', pending ? wait : (owner || '未知')],
+    ];
+    $('#infoTable').innerHTML = rows
+      .map(r => '<tr><th>' + escapeHtml(r[0]) + '</th><td>' + escapeHtml(String(r[1])) + '</td></tr>')
+      .join('');
+  }
+
+  async function openDocInfo() {
+    if (!lastMarkdown) {
+      toast('当前没有打开的文档');
+      return;
+    }
+    const invoke = window.__TAURI__ && window.__TAURI__.invoke;
+    const canReadFs = !!(currentFilePath && invoke);
+    // 浏览器模式：按 UTF-8 编码估算字节数
+    let fallbackSize = null;
+    try { fallbackSize = new TextEncoder().encode(lastMarkdown).length; } catch (_) {}
+    // 先立即展示可计算的信息，文件系统信息异步补入，避免弹窗等待
+    renderInfoRows(canReadFs ? null : fallbackSize, null, null, null, canReadFs);
+    $('#infoOverlay').classList.add('show');
+    if (!canReadFs) return;
+    try {
+      const info = await invoke('get_file_info', { path: currentFilePath });
+      renderInfoRows(info.size, info.createdMs, info.modifiedMs, info.owner, false);
+    } catch (e) {
+      console.warn('读取文件信息失败:', e);
+      renderInfoRows(fallbackSize, null, null, null, false);
+    }
+  }
+
+  // 无打开的文档时禁用“文档信息”按钮
+  function updateDocInfoButton() {
+    $('#btnDocInfo').disabled = !lastMarkdown;
+  }
 
   // 通过隐藏 iframe 打印：使用 document.write 写入完整 HTML 文档，
   // 使 iframe 成为独立的 about:blank 文档，避免页脚显示 https://tauri.localhost
@@ -1691,6 +2588,8 @@
       closeDrawer();
       closeMermaidFullscreen();
       fontsizePopup.classList.remove('show');
+      $('#helpOverlay').classList.remove('show');
+      $('#infoOverlay').classList.remove('show');
     }
   });
 
@@ -1716,6 +2615,7 @@
   populateChips();
   applyTheme(settings.theme);
   loadCodeTheme(settings.codeTheme);
+  updateDocInfoButton();
 
   const params = new URLSearchParams(location.search);
   if (params.get('url')) loadRemote(params.get('url'));

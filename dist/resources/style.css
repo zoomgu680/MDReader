@@ -240,6 +240,9 @@ body {
 .btn.outline { border-color: var(--border); }
 .btn.outline:hover { background: var(--bg-soft); }
 .btn svg { width: 18px; height: 18px; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn:disabled:hover { background: transparent; }
+.btn:disabled:active { transform: none; }
 
 /* ============================================================
    布局
@@ -400,7 +403,7 @@ select {
 
 .drawer-footer {
   padding: 12px 20px; border-top: 1px solid var(--border);
-  display: flex; gap: 8px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
 }
 
 /* ============================================================
@@ -534,6 +537,88 @@ select {
   text-align: center;
   margin: 16px 0 0;
   font-size: 11px;
+  color: var(--fg-faint);
+}
+
+/* ============================================================
+   Markdown 语法帮助
+   ============================================================ */
+.about-modal.help-modal { width: 760px; }
+.about-modal.info-modal { width: 540px; }
+.help-intro {
+  margin: 0 0 18px;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.help-group { margin-bottom: 18px; }
+.help-group h4 {
+  margin: 0 0 8px;
+  padding-left: 8px;
+  border-left: 3px solid var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.help-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.help-table tr { border-bottom: 1px solid var(--border-soft); }
+.help-table tr:last-child { border-bottom: none; }
+.help-table td {
+  padding: 7px 8px 7px 0;
+  vertical-align: top;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--fg-muted);
+}
+.help-table td:first-child { width: 48%; }
+.help-table code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--code-bg);
+  color: var(--code-fg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+.help-table pre { margin: 0; }
+.help-table pre code {
+  display: block;
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   文档综合信息
+   ============================================================ */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.info-table tr { border-bottom: 1px solid var(--border-soft); }
+.info-table tr:last-child { border-bottom: none; }
+.info-table th {
+  width: 38%;
+  padding: 9px 8px 9px 0;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  vertical-align: top;
+}
+.info-table td {
+  padding: 9px 0;
+  font-size: 13px;
+  color: var(--fg);
+  word-break: break-all;
+}
+.info-note {
+  margin: 14px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
   color: var(--fg-faint);
 }
 
