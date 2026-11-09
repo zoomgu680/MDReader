@@ -75,9 +75,9 @@ cd MDReader
 git checkout v0.2.1        # 或 main
 ```
 
-> **注意**：仓库的 `.gitignore` 排除了 `release.sh`、`sync-dist.sh`、`update.sh`、`*.ps1`
-> 等发布/同步脚本（属本地工具，不入库）。克隆后看不到这些脚本是正常的，
-> 请按下文命令手工执行，或自行在本地创建。
+> **注意**：`release.sh` 已纳入版本管理，克隆后可直接使用；
+> `sync-dist.sh`、`update.sh`、`release.ps1` 等脚本仍被 `.gitignore` 排除（属本地工具，不入库），
+> 克隆后看不到属正常现象，请按下文命令手工执行。
 
 ---
 
@@ -90,7 +90,7 @@ mkdir -p dist/resources
 cp index.html dist/index.html
 cp -R resources/* dist/resources/
 
-# 若本地存在同步脚本（未入库，按需自建）
+# 若本地存在同步脚本（未入库，可自行创建）
 # ./sync-dist.sh
 
 # 校验：两边文件数应一致（当前为 80）
@@ -349,7 +349,7 @@ gh release upload v0.2.1 \
 
 ### 9.4 关于本地 `release.sh`
 
-仓库根目录的 `release.sh`（未入库）可完成
+仓库根目录的 `release.sh`（已入库，随代码一同分发）可完成
 「改版本号 → 同步 dist → 构建 dmg → 提交 → 打 tag → 创建 Release」，
 与 Windows 的 `release.ps1` 流程一致：
 
@@ -425,7 +425,7 @@ chmod +x release.sh
 **需要留意的部分**
 
 1. 未配置 `signingIdentity` / `entitlements`：产物未签名，需按第 8 节处理 Gatekeeper。
-2. 发布脚本（`release.sh` / `sync-dist.sh` / `update.sh`）被 `.gitignore` 排除，
-   克隆仓库后不存在，需按本文档命令手工执行。
+2. `sync-dist.sh` / `update.sh` 被 `.gitignore` 排除，克隆仓库后不存在；
+   `release.sh` 已入库，克隆后可直接使用。
 3. `tauri.conf.json` 中 `bundle.windows.webviewInstallMode` 仅对 Windows 生效，
    macOS 构建时可忽略，无需改动。

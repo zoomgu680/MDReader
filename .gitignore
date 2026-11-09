@@ -48,7 +48,6 @@ yarn-error.log*
 # ---- Git 同步脚本 ----
 /manage.md
 /release.ps1
-/release.sh
 /sync-dist.ps1
 /sync-dist.sh
 /update.ps1
