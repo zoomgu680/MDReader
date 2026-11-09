@@ -66,6 +66,8 @@ MDReader/
 │   ├── tauri.conf.json      # Tauri 应用配置
 │   ├── build.rs
 │   └── icons/              # 应用图标（ico/icns/png）
+├── docs/
+│   └── BUILD-macOS.md      # macOS 构建 / 签名 / 发布指南
 ├── THIRD_PARTY_LICENSES    # 第三方组件许可证
 ├── LICENSE                 # 本软件许可证（MIT / Apache-2.0）
 └── README.md
@@ -86,6 +88,8 @@ MDReader/
 - **macOS 10.15** 及以上
 
 ## 构建指南
+
+> macOS 平台的完整构建、签名与发布流程见 [docs/BUILD-macOS.md](./docs/BUILD-macOS.md)。
 
 ### 1. 准备 dist 目录
 
